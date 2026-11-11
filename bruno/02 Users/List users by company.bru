@@ -1,0 +1,30 @@
+meta {
+  name: List users by company
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/users?company_id={{first_company_id}}
+  body: none
+  auth: none
+}
+
+params:query {
+  company_id: {{first_company_id}}
+}
+
+headers {
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("svi korisnici su iz trazene firme", function () {
+    const company_id = Number(bru.getVar("first_company_id"));
+    res.body.data.forEach((user) => expect(user.company_id).to.equal(company_id));
+  });
+}

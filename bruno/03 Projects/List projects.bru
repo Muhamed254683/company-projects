@@ -1,0 +1,24 @@
+meta {
+  name: List projects
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/projects?page=1&per_page=5
+  body: none
+  auth: none
+}
+
+params:query {
+  page: 1
+  per_page: 5
+}
+
+headers {
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 200
+}

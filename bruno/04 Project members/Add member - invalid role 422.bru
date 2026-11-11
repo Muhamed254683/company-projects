@@ -1,0 +1,32 @@
+meta {
+  name: Add member - invalid role 422
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/projects/{{project_id}}/members
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "user_id": {{first_user_id}},
+    "role": "sef"
+  }
+}
+
+assert {
+  res.status: eq 422
+}
+
+tests {
+  test("greska za role", function () {
+    expect(res.body.errors).to.have.property("role");
+  });
+}

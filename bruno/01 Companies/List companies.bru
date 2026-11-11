@@ -1,0 +1,36 @@
+meta {
+  name: List companies
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/companies?page=1&per_page=5
+  body: none
+  auth: none
+}
+
+params:query {
+  page: 1
+  per_page: 5
+}
+
+headers {
+  Accept: application/json
+}
+
+script:post-response {
+  // Prva postojeca firma: koriste je Users i Projects zahtevi.
+  bru.setVar("first_company_id", res.body.data[0].id);
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("ima data, links i meta (paginacija)", function () {
+    expect(res.body).to.have.keys("data", "links", "meta");
+    expect(res.body.meta.per_page).to.equal(5);
+  });
+}

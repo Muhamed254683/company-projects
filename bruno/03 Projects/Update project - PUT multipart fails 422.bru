@@ -1,0 +1,41 @@
+meta {
+  name: Update project - PUT multipart fails 422
+  type: http
+  seq: 7
+}
+
+put {
+  url: {{base_url}}/projects/{{project_id}}
+  body: multipartForm
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:multipart-form {
+  company_id: {{first_company_id}}
+  name: Bruno test projekat {{random_suffix}}
+  status: on_hold
+}
+
+docs {
+  NAMERNO NE RADI: demonstracija problema iz Faze 4.
+
+  PHP cita polja i fajlove iz multipart/form-data tela SAMO za POST zahteve.
+  Za PUT telo ostaje neprocitano, pa Laravel vidi prazan zahtev
+  i vraca 422 ("company_id is required", "name is required").
+
+  Resenje je u sledecem zahtevu: POST + polje _method=PUT.
+}
+
+assert {
+  res.status: eq 422
+}
+
+tests {
+  test("Laravel nije video poslata polja", function () {
+    expect(res.body.errors).to.include.keys("company_id", "name");
+  });
+}

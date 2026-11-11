@@ -1,0 +1,28 @@
+meta {
+  name: Update company
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{base_url}}/companies/{{company_id}}
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "name": "Bruno Test Firma IZMENJENA d.o.o.",
+    "tax_number": "{{random_tax_number}}",
+    "city": "Beograd"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.data.city: eq Beograd
+}

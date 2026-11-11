@@ -1,0 +1,35 @@
+meta {
+  name: List users
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/users?page=1&per_page=5
+  body: none
+  auth: none
+}
+
+params:query {
+  page: 1
+  per_page: 5
+}
+
+headers {
+  Accept: application/json
+}
+
+script:post-response {
+  // Prvi postojeci korisnik: koristi ga "04 Project members".
+  bru.setVar("first_user_id", res.body.data[0].id);
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("lozinka se nikad ne vraca", function () {
+    expect(res.body.data[0]).to.not.have.property("password");
+  });
+}
