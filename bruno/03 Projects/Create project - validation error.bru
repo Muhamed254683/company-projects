@@ -1,0 +1,36 @@
+meta {
+  name: Create project - validation error
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/projects
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "company_id": 999999,
+    "name": "",
+    "status": "gotovo",
+    "start_date": "2026-05-10",
+    "end_date": "2026-01-01",
+    "budget": -5
+  }
+}
+
+assert {
+  res.status: eq 422
+}
+
+tests {
+  test("greske za company_id, name, status, end_date i budget", function () {
+    expect(res.body.errors).to.have.keys("company_id", "name", "status", "end_date", "budget");
+  });
+}

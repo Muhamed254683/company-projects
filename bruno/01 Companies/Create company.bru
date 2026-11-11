@@ -1,0 +1,41 @@
+meta {
+  name: Create company
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/companies
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "name": "Bruno Test Firma d.o.o.",
+    "tax_number": "{{random_tax_number}}",
+    "email": "info@bruno-test.rs",
+    "phone": "+381 21 123-4567",
+    "website": "https://www.bruno-test.rs",
+    "address": "Bulevar oslobođenja 1",
+    "city": "Novi Sad",
+    "description": "Firma napravljena iz Bruno kolekcije."
+  }
+}
+
+script:pre-request {
+  // Nasumican PIB od 9 cifara, da drugo pokretanje ne padne na "already taken".
+  bru.setVar("random_tax_number", String(Math.floor(100000000 + Math.random() * 900000000)));
+}
+
+script:post-response {
+  bru.setVar("company_id", res.body.data.id);
+}
+
+assert {
+  res.status: eq 201
+}

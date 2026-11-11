@@ -1,0 +1,34 @@
+meta {
+  name: List projects - filtered
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/projects?status=active&company_id={{first_company_id}}
+  body: none
+  auth: none
+}
+
+params:query {
+  status: active
+  company_id: {{first_company_id}}
+}
+
+headers {
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("svi projekti su active i iz trazene firme", function () {
+    const company_id = Number(bru.getVar("first_company_id"));
+    res.body.data.forEach((project) => {
+      expect(project.status).to.equal("active");
+      expect(project.company_id).to.equal(company_id);
+    });
+  });
+}
