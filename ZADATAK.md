@@ -76,3 +76,24 @@ Galerija slika (upload i brisanje)
 Lista članova sa ulogama i dodavanje novih članova
 Vizuelno označi članove koji su iz druge kompanije
 Prikaži greške validacije koje vraća Laravel ispod odgovarajućih polja. Napravi zajedničke komponente (input, dugme, modal...) umesto da ponavljaš kod.
+Faza 7 – Blade stranice
+Ove dve stranice renderuje Laravel direktno iz baze, ne preko API-ja:
+- Dashboard (/): statistika (broj kompanija, projekata i korisnika, projekti po statusu) i poslednji projekti.
+- Prikaz projekta (/showcase/{slug}): javna stranica projekta sa opisom, kompanijom, galerijom i timom.
+Koristi Blade layout i Tailwind.
+
+Faza 8 – Završetak
+- README sa uputstvom kako se projekat pokreće od nule.
+- .env.example za oba projekta.
+- Očisti kod.
+
+Zadatak je gotov kada:
+[ ] Neko drugi može da pokrene projekat prateći samo README
+[ ] Seeder puni bazu realnim podacima
+[ ] CRUD radi za sva tri entiteta, sa validacijom
+[ ] Projekat može imati članove iz druge kompanije i to se vidi u aplikaciji
+[ ] Slike se dodaju, prikazuju i brišu
+[ ] Obe Blade stranice rade
+[ ] API kolekcija je u repou
+
+Bonus (ako ostane vremena): pretraga i filteri na listama, soft delete za projekte, login (Laravel Sanctum), sortiranje slika, notifikacije posle uspešnih akcija.

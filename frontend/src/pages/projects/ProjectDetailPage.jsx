@@ -1,4 +1,5 @@
 import { useParams } from 'react-router-dom'
+import { BACKEND_URL } from '../../api/client.js'
 import ProjectGallery from '../../components/projects/ProjectGallery.jsx'
 import ProjectMembers from '../../components/projects/ProjectMembers.jsx'
 import ProjectStatusBadge from '../../components/ProjectStatusBadge.jsx'
@@ -46,6 +47,10 @@ function ProjectDetailPage() {
           <>
             <Button variant="secondary" to="/projects">
               ‹ Svi projekti
+            </Button>
+            {/* Javna Blade stranica koju pravi Laravel (Faza 7). */}
+            <Button variant="secondary" href={`${BACKEND_URL}/showcase/${project.slug}`}>
+              Javna stranica ↗
             </Button>
             <Button to={`/projects/${project.id}/edit`}>Izmeni projekat</Button>
           </>

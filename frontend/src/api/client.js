@@ -5,6 +5,10 @@ if (!API_URL) {
   throw new Error('VITE_API_URL nije podesen. Napravi frontend/.env po uzoru na .env.example.')
 }
 
+// Adresa Laravel backenda bez "/api" (npr. za Blade stranicu /showcase/{slug}).
+// http://localhost:8000/api -> http://localhost:8000
+export const BACKEND_URL = API_URL.replace(/\/api\/?$/, '')
+
 // Greska koju bacamo kada API vrati status 4xx/5xx.
 // status: HTTP status (npr. 404, 422), data: telo odgovora (npr. { message, errors }).
 export class ApiError extends Error {
