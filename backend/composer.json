@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "company-projects/backend",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Company Projects: REST API i Blade stranice za kompanije, projekte i korisnike.",
+    "keywords": ["laravel", "rest-api", "projects"],
     "license": "MIT",
     "require": {
         "php": "^8.3",
