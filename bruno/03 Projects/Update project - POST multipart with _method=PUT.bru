@@ -1,0 +1,37 @@
+meta {
+  name: Update project - POST multipart with _method=PUT
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{base_url}}/projects/{{project_id}}
+  body: multipartForm
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:multipart-form {
+  _method: PUT
+  company_id: {{first_company_id}}
+  name: Bruno test projekat {{random_suffix}}
+  status: on_hold
+}
+
+docs {
+  RESENJE za PUT + multipart/form-data ("method spoofing").
+
+  Saljemo pravi POST (pa PHP procita polja i fajlove),
+  a polje _method=PUT kaze Laravelu da ga tretira kao PUT
+  i posalje u ProjectController@update.
+
+  Ovo koristi i React kada salje FormData (npr. forma sa fajlom) na rutu za izmenu.
+}
+
+assert {
+  res.status: eq 200
+  res.body.data.status: eq on_hold
+}

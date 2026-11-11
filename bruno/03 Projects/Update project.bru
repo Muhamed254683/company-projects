@@ -1,0 +1,32 @@
+meta {
+  name: Update project
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{base_url}}/projects/{{project_id}}
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "company_id": {{first_company_id}},
+    "name": "Bruno test projekat {{random_suffix}}",
+    "status": "active",
+    "start_date": null,
+    "end_date": "2027-01-15",
+    "budget": 20000
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.data.status: eq active
+  res.body.data.start_date: isNull
+}

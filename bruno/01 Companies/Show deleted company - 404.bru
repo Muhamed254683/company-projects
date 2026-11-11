@@ -1,0 +1,19 @@
+meta {
+  name: Show deleted company - 404
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{base_url}}/companies/{{company_id}}
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 404
+}
