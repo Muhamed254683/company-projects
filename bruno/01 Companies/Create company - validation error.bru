@@ -1,0 +1,34 @@
+meta {
+  name: Create company - validation error
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/companies
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "name": "",
+    "tax_number": "12ab",
+    "email": "nije-email",
+    "website": "nije-url"
+  }
+}
+
+assert {
+  res.status: eq 422
+}
+
+tests {
+  test("greske za name, tax_number, email i website", function () {
+    expect(res.body.errors).to.have.keys("name", "tax_number", "email", "website");
+  });
+}

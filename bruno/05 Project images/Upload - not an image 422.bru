@@ -1,0 +1,29 @@
+meta {
+  name: Upload - not an image 422
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/projects/{{project_id}}/images
+  body: multipartForm
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:multipart-form {
+  images[0]: @file(files/not-an-image.txt)
+}
+
+assert {
+  res.status: eq 422
+}
+
+tests {
+  test("greska za images.0", function () {
+    expect(res.body.errors).to.have.property("images.0");
+  });
+}

@@ -1,0 +1,29 @@
+meta {
+  name: Show project
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/projects/{{project_id}}
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Vraca projekat sa firmom, clanovima (sa ulogama) i slikama.
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("sadrzi company, members i images", function () {
+    expect(res.body.data).to.include.keys("company", "members", "images");
+  });
+}

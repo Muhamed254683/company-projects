@@ -1,0 +1,35 @@
+meta {
+  name: Create user - validation error
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/users
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "company_id": 999999,
+    "first_name": "",
+    "last_name": "Test",
+    "email": "nije-email",
+    "password": "123"
+  }
+}
+
+assert {
+  res.status: eq 422
+}
+
+tests {
+  test("greske za company_id, first_name, email i password", function () {
+    expect(res.body.errors).to.have.keys("company_id", "first_name", "email", "password");
+  });
+}
