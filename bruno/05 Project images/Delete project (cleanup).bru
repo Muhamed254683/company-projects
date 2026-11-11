@@ -1,0 +1,23 @@
+meta {
+  name: Delete project (cleanup)
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{base_url}}/projects/{{project_id}}
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Brise test projekat iz foldera "03 Projects" zajedno sa preostalom slikom (i sa diska).
+}
+
+assert {
+  res.status: eq 204
+}

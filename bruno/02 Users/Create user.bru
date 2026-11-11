@@ -1,0 +1,41 @@
+meta {
+  name: Create user
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/users
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "company_id": {{first_company_id}},
+    "first_name": "Ana",
+    "last_name": "Testić",
+    "email": "ana.bruno.{{random_suffix}}@example.com",
+    "phone": "+381 64 123 4567",
+    "job_title": "QA inženjer",
+    "password": "tajna1234"
+  }
+}
+
+script:pre-request {
+  // Nasumican nastavak, da email bude jedinstven pri svakom pokretanju.
+  bru.setVar("random_suffix", String(Date.now()));
+}
+
+script:post-response {
+  bru.setVar("user_id", res.body.data.id);
+}
+
+assert {
+  res.status: eq 201
+  res.body.data.full_name: eq Ana Testić
+}

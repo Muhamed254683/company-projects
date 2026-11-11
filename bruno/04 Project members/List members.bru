@@ -1,0 +1,19 @@
+meta {
+  name: List members
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/projects/{{project_id}}/members
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 200
+}

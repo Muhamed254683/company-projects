@@ -1,0 +1,31 @@
+meta {
+  name: Add member
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/projects/{{project_id}}/members
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "user_id": {{first_user_id}},
+    "role": "developer"
+  }
+}
+
+docs {
+  Dozvoljene uloge: manager, developer, designer, tester.
+}
+
+assert {
+  res.status: eq 201
+  res.body.data.role: eq developer
+}

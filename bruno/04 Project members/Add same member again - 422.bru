@@ -1,0 +1,32 @@
+meta {
+  name: Add same member again - 422
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/projects/{{project_id}}/members
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "user_id": {{first_user_id}},
+    "role": "tester"
+  }
+}
+
+assert {
+  res.status: eq 422
+}
+
+tests {
+  test("poruka da je korisnik vec clan", function () {
+    expect(res.body.errors.user_id[0]).to.equal("This user is already a member of this project.");
+  });
+}
