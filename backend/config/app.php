@@ -54,6 +54,10 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    // Adresa React aplikacije, za link iz Blade stranica. FRONTEND_URL moze imati vise adresa
+    // odvojenih zarezom (koriste se i za CORS); ovde uzimamo prvu.
+    'frontend_url' => trim(explode(',', env('FRONTEND_URL', 'http://localhost:5173'))[0]),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

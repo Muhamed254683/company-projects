@@ -14,8 +14,9 @@ const sizes = {
 // Primeri:
 //   <Button onClick={...}>Sacuvaj</Button>
 //   <Button variant="danger" size="sm">Obrisi</Button>
-//   <Button to="/companies/new">Dodaj</Button>   (link koji izgleda kao dugme)
-function Button({ variant = 'primary', size = 'md', to, type = 'button', className = '', children, ...props }) {
+//   <Button to="/companies/new">Dodaj</Button>   (link unutar React aplikacije koji izgleda kao dugme)
+//   <Button href="http://...">Spolja</Button>     (obican link ka drugoj adresi, otvara se u novom tabu)
+function Button({ variant = 'primary', size = 'md', to, href, type = 'button', className = '', children, ...props }) {
   const classes = [
     'inline-flex items-center justify-center gap-2 rounded-md font-medium shadow-sm transition-colors',
     'disabled:cursor-not-allowed disabled:opacity-50',
@@ -29,6 +30,15 @@ function Button({ variant = 'primary', size = 'md', to, type = 'button', classNa
       <Link to={to} className={classes} {...props}>
         {children}
       </Link>
+    )
+  }
+
+  if (href) {
+    // rel="noopener noreferrer": nova kartica ne dobija pristup ovoj (bezbednosna navika za target="_blank").
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className={classes} {...props}>
+        {children}
+      </a>
     )
   }
 

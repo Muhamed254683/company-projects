@@ -13,6 +13,8 @@ class ProjectResource extends JsonResource
             'id' => $this->id,
             'company_id' => $this->company_id,
             'name' => $this->name,
+            // Za javnu Blade stranicu /showcase/{slug}.
+            'slug' => $this->slug,
             'description' => $this->description,
             'status' => $this->status->value,
             // Samo datum (2026-11-11), bez vremena, jer su kolone tipa date.

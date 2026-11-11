@@ -2,13 +2,12 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
+// Namerno BEZ "WithoutModelEvents" (iz Laravel sablona): model eventi moraju da rade i pri seedovanju,
+// jer Project::creating pravi slug. Bez njega bi seeder napravio projekte bez slug-a i pukao.
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
      * Seed the application's database.
      * Redosled je bitan: korisnici i projekti trebaju kompanije, a clanstva trebaju sve troje.
