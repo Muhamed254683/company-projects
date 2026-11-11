@@ -39,3 +39,13 @@ export async function apiRequest(path, { method = 'GET', body } = {}) {
 
   return data
 }
+
+// Iz greske 422 (validacija) vraca objekat { polje: ['poruka', ...] }; za sve ostale greske prazan objekat.
+// Primer: const errors = getValidationErrors(err); errors.name?.[0] -> "The name field is required."
+export function getValidationErrors(error) {
+  if (error instanceof ApiError && error.status === 422) {
+    return error.data?.errors ?? {}
+  }
+
+  return {}
+}
