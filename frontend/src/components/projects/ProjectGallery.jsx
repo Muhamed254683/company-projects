@@ -6,7 +6,37 @@ import Button from '../ui/Button.jsx'
 import ConfirmDialog from '../ui/ConfirmDialog.jsx'
 import Modal from '../ui/Modal.jsx'
 
+// Ogranicenja moraju da prate backend i PHP (php.ini):
+// - Laravel: najvise 10 slika po zahtevu (UploadProjectImagesRequest)
+// - upload_max_filesize = 2M: najvise 2 MB po slici
+// - post_max_size = 8M: najvise 8 MB CEO zahtev; uzimamo 7,5 MB, jer zahtev pored slika nosi i delove forme.
 const MAX_FILES = 10
+const MAX_FILE_BYTES = 2 * 1024 * 1024
+const MAX_TOTAL_BYTES = 7.5 * 1024 * 1024
+
+// Provera PRE slanja: korisnik odmah dobija poruku na srpskom, a ne gresku servera.
+function clientErrorMessages(files) {
+  const messages = []
+
+  if (files.length > MAX_FILES) {
+    messages.push(`Izabrano je ${files.length} slika; odjednom se može poslati najviše ${MAX_FILES}.`)
+  }
+
+  for (const file of files) {
+    if (file.size > MAX_FILE_BYTES) {
+      messages.push(`${file.name} je ${formatFileSize(file.size)} (najviše ${formatFileSize(MAX_FILE_BYTES)} po slici).`)
+    }
+  }
+
+  const total = files.reduce((sum, file) => sum + file.size, 0)
+  if (total > MAX_TOTAL_BYTES) {
+    messages.push(
+      `Ukupno ${formatFileSize(total)}; odjednom se može poslati najviše ${formatFileSize(MAX_TOTAL_BYTES)}. Pošalji slike u više navrata.`,
+    )
+  }
+
+  return messages
+}
 
 // Laravel vraca greske po fajlu: { "images.0": ["..."], "images.2": ["..."] }.
 // Pretvaramo ih u poruke sa imenom fajla, da korisnik zna KOJA slika ne valja.
@@ -34,8 +64,10 @@ function ProjectGallery({ project, onChanged }) {
 
   function handleFilesChange(event) {
     // event.target.files je FileList; pretvaramo ga u obican niz.
-    setFiles([...event.target.files])
-    setUploadErrors([])
+    const selected = [...event.target.files]
+    setFiles(selected)
+    // Proveravamo odmah po izboru, da korisnik ne mora prvo da klikne "Otpremi".
+    setUploadErrors(clientErrorMessages(selected))
   }
 
   async function handleUpload(event) {
@@ -43,6 +75,12 @@ function ProjectGallery({ project, onChanged }) {
 
     if (files.length === 0) {
       setUploadErrors(['Izaberi bar jednu sliku.'])
+      return
+    }
+
+    const client_errors = clientErrorMessages(files)
+    if (client_errors.length > 0) {
+      setUploadErrors(client_errors)
       return
     }
 
@@ -64,7 +102,13 @@ function ProjectGallery({ project, onChanged }) {
       onChanged()
     } catch (err) {
       const errors = err.data?.errors
-      setUploadErrors(errors ? uploadErrorMessages(errors, files) : [err.message])
+
+      if (err.status === 413) {
+        // 413 = PHP je odbio ceo zahtev kao prevelik (post_max_size), pre nego sto je stigao do Laravela.
+        setUploadErrors([`Slike su zajedno prevelike; odjednom se može poslati najviše ${formatFileSize(MAX_TOTAL_BYTES)}.`])
+      } else {
+        setUploadErrors(errors ? uploadErrorMessages(errors, files) : [err.message])
+      }
     } finally {
       setUploading(false)
     }
@@ -109,8 +153,11 @@ function ProjectGallery({ project, onChanged }) {
         </div>
 
         <p className="text-xs text-gray-500">
-          {files.length > 0 ? `Izabrano: ${files.length} ${files.length === 1 ? 'fajl' : 'fajlova'}. ` : ''}
-          Dozvoljeno: jpg, png, webp; najviše 2 MB po slici i {MAX_FILES} slika odjednom.
+          {files.length > 0
+            ? `Izabrano: ${files.length} ${files.length === 1 ? 'fajl' : 'fajlova'} (${formatFileSize(files.reduce((sum, file) => sum + file.size, 0))}). `
+            : ''}
+          Dozvoljeno: jpg, png, webp; najviše {formatFileSize(MAX_FILE_BYTES)} po slici, {formatFileSize(MAX_TOTAL_BYTES)} ukupno i{' '}
+          {MAX_FILES} slika odjednom.
         </p>
 
         {upload_errors.length > 0 && (

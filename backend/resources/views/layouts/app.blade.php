@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     {{-- Svaka stranica moze da postavi svoj naslov sa @section('title', '...'). --}}
     <title>@yield('title', 'Dashboard') · Company Projects</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
 
     {{-- Tailwind CSS preko Vite-a (resources/css/app.css). Pre prvog otvaranja: npm run build. --}}
     @vite(['resources/css/app.css'])

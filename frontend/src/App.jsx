@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout.jsx'
+import ResetOnUrlChange from './components/ResetOnUrlChange.jsx'
 import CompanyFormPage from './pages/companies/CompanyFormPage.jsx'
 import CompanyListPage from './pages/companies/CompanyListPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
@@ -9,6 +10,12 @@ import ProjectListPage from './pages/projects/ProjectListPage.jsx'
 import UserFormPage from './pages/users/UserFormPage.jsx'
 import UserListPage from './pages/users/UserListPage.jsx'
 
+// Forma za dodavanje i izmenu je ista komponenta (razlikuje ih da li u URL-u postoji :id).
+// ResetOnUrlChange: kada se adresa promeni (npr. /new -> /5/edit), forma krece od nule.
+function form(page) {
+  return <ResetOnUrlChange>{page}</ResetOnUrlChange>
+}
+
 function App() {
   return (
     <Routes>
@@ -17,17 +24,17 @@ function App() {
         <Route path="/" element={<Navigate to="/companies" replace />} />
 
         <Route path="/companies" element={<CompanyListPage />} />
-        {/* Ista komponenta za dodavanje i izmenu; razlikuje ih da li u URL-u postoji :id. */}
-        <Route path="/companies/new" element={<CompanyFormPage />} />
-        <Route path="/companies/:id/edit" element={<CompanyFormPage />} />
+        <Route path="/companies/new" element={form(<CompanyFormPage />)} />
+        <Route path="/companies/:id/edit" element={form(<CompanyFormPage />)} />
 
         <Route path="/projects" element={<ProjectListPage />} />
-        <Route path="/projects/new" element={<ProjectFormPage />} />
+        <Route path="/projects/new" element={form(<ProjectFormPage />)} />
         <Route path="/projects/:id" element={<ProjectDetailPage />} />
-        <Route path="/projects/:id/edit" element={<ProjectFormPage />} />
+        <Route path="/projects/:id/edit" element={form(<ProjectFormPage />)} />
+
         <Route path="/users" element={<UserListPage />} />
-        <Route path="/users/new" element={<UserFormPage />} />
-        <Route path="/users/:id/edit" element={<UserFormPage />} />
+        <Route path="/users/new" element={form(<UserFormPage />)} />
+        <Route path="/users/:id/edit" element={form(<UserFormPage />)} />
 
         {/* "*" hvata svaki URL koji nije gore naveden. */}
         <Route path="*" element={<NotFoundPage />} />

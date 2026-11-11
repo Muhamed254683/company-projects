@@ -148,7 +148,8 @@ Pokrivaju: obe Blade stranice, pravila za `slug` i brisanje slika sa diska (pri 
 - Kompanije, projekti, korisnici: lista sa paginacijom, dodavanje i izmena (ista forma), brisanje uz potvrdu.
 - Greske validacije iz Laravela prikazuju se ispod odgovarajucih polja.
 - Detalji projekta: clanovi sa ulogama (dodavanje i uklanjanje); clanovi iz druge firme i frilenseri su oznaceni zuto.
-- Galerija: upload vise slika odjednom (jpg/png/webp, do 2 MB), uvecanje, brisanje (i sa diska).
+- Galerija: upload vise slika odjednom (jpg/png/webp, do 2 MB po slici, 7,5 MB ukupno, 10 slika), uvecanje, brisanje (i sa diska).
+  Velicina se proverava vec u browseru, pre slanja.
 
 **Blade (http://localhost:8000)** — Laravel ih pravi direktno iz baze, ne preko API-ja
 - `/` dashboard: broj kompanija, projekata i korisnika, projekti po statusu, poslednji projekti.
@@ -166,7 +167,8 @@ Pokrivaju: obe Blade stranice, pravila za `slug` i brisanje slika sa diska (pri 
 
 - Svaki zahtev treba da ima header `Accept: application/json`.
 - Liste su paginirane: `?page=1&per_page=15` (najvise 100). Filteri: `/api/users?company_id=`, `/api/projects?company_id=&status=`.
-- Slike: `multipart/form-data`, polje `images[]`, jpg/png/webp, najvise 2 MB po slici i 10 po zahtevu.
+- Slike: `multipart/form-data`, polje `images[]`, jpg/png/webp, najvise 2 MB po slici i 10 po zahtevu;
+  ceo zahtev najvise 8 MB (PHP: `upload_max_filesize = 2M`, `post_max_size = 8M` u `php.ini`).
 - Izmena sa fajlovima (`multipart/form-data`) ide kao `POST` sa poljem `_method=PUT`,
   jer PHP ne cita multipart telo kod pravih `PUT` zahteva.
 
@@ -203,5 +205,15 @@ Lozinke i adrese su u `.env` fajlovima (nisu u Git-u); sabloni sa objasnjenjima 
 | Slike se ne vide (HTTP 403 na `/storage/...`) | U `backend/` nije pokrenut `php artisan storage:link`. |
 | React javlja `Failed to fetch` | Backend ne radi (`php artisan serve`), ili adresa frontenda nije u `FRONTEND_URL` (CORS), ili je pogresan `VITE_API_URL`. |
 | `npm run dev` javlja `Cannot find native binding` | Poznat npm bag: obrisi `node_modules` i `package-lock.json`, pa ponovo `npm install`. |
-| Upload slike: "failed to upload" | Slika je veca od 2 MB (`upload_max_filesize` u `php.ini`). |
+| Upload preko API-ja (npr. Bruno): "failed to upload" ili "The POST data is too large." | Slika je veca od 2 MB, ili su sve zajedno vece od 8 MB (`upload_max_filesize` / `post_max_size` u `php.ini`). React aplikacija ovo proverava pre slanja i javlja na srpskom. |
 | Vite pokrene frontend na portu 5174 | Port 5173 je zauzet; zatvori drugi Vite ili dodaj novu adresu u `FRONTEND_URL` u `backend/.env`. |
+
+---
+
+## 8. Poznata ograničenja
+
+- **Nema prijave korisnika.** API i aplikacija su otvoreni svakome ko im pristupi; zadatak ne trazi login
+  (Laravel Sanctum je na listi bonusa).
+- **Padajuce liste** (izbor kompanije u formama, izbor novog clana projekta) ucitavaju **najvise 100 stavki**,
+  jer API vraca najvise 100 redova po strani. Za vecu bazu trebalo bi polje za pretragu umesto liste.
+- **Poruke validacije su na engleskom** (dolaze iz Laravela, npr. "The name field is required."), a interfejs je na srpskom.
