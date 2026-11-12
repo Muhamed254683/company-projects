@@ -10,12 +10,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 #[Fillable(['company_id', 'name', 'description', 'status', 'start_date', 'end_date', 'budget'])]
 class Project extends Model
 {
-    use HasFactory, Searchable;
+    // SoftDeletes: delete() samo upise datum u deleted_at ("korpa"); restore() vraca; forceDelete() brise zauvek.
+    // Laravel projekte iz korpe sam izostavlja iz svih upita (osim uz withTrashed() / onlyTrashed()).
+    use HasFactory, Searchable, SoftDeletes;
 
     protected $attributes = [
         'status' => 'planned',
@@ -41,9 +44,11 @@ class Project extends Model
             }
         });
 
-        // Slike brisemo preko Eloquent-a, jednu po jednu,
-        // da bi se za svaku pokrenuo ProjectImage::deleted i obrisao fajl sa diska.
-        static::deleting(function (Project $project) {
+        // Slike brisemo tek pri TRAJNOM brisanju (forceDelete). Projekat u korpi zadrzava slike i clanove,
+        // da bi se posle vracanja (restore) vratio kakav je bio.
+        // Brisemo ih preko Eloquent-a, jednu po jednu, da bi se za svaku pokrenuo ProjectImage::deleted
+        // i obrisao fajl sa diska (redove u project_user i project_images baza brise sama: ON DELETE CASCADE).
+        static::forceDeleting(function (Project $project) {
             $project->images()->each(fn (ProjectImage $image) => $image->delete());
         });
     }
@@ -57,7 +62,8 @@ class Project extends Model
         $slug = $base;
         $suffix = 2;
 
-        while (static::where('slug', $slug)->exists()) {
+        // withTrashed: slug mora biti jedinstven i u odnosu na projekte u korpi (kolona slug je unique u bazi).
+        while (static::withTrashed()->where('slug', $slug)->exists()) {
             $slug = "{$base}-{$suffix}";
             $suffix++;
         }

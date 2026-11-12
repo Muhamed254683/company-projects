@@ -6,6 +6,15 @@ export function formatDate(date_string) {
   return `${day}.${month}.${year}.`
 }
 
+// '2026-11-12T16:30:00+00:00' -> '12.11.2026. 17:30' (u lokalnom vremenu)  (null -> '–')
+export function formatDateTime(iso_string) {
+  if (!iso_string) return '–'
+
+  const date = new Date(iso_string)
+  const pad = (number) => String(number).padStart(2, '0')
+  return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()}. ${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
 // 1536 -> '1,5 KB', 2097152 -> '2,0 MB'
 export function formatFileSize(bytes) {
   if (bytes < 1024) return `${bytes} B`

@@ -20,6 +20,8 @@ class ListProjectsRequest extends FormRequest
             'search' => ['nullable', 'string', 'max:100'],
             'company_id' => ['nullable', 'integer'],
             'status' => ['nullable', Rule::enum(ProjectStatus::class)],
+            // trashed=only -> samo projekti u korpi
+            'trashed' => ['nullable', Rule::in(['only'])],
             'page' => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer'],
         ];

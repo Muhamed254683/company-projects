@@ -28,6 +28,8 @@ class ProjectResource extends JsonResource
             'images_count' => $this->whenCounted('images'),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
+            // null = aktivan projekat; datum = projekat je u korpi.
+            'deleted_at' => $this->deleted_at?->toIso8601String(),
         ];
     }
 }

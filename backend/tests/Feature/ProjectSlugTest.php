@@ -56,9 +56,11 @@ class ProjectSlugTest extends TestCase
     {
         $this->seed();
 
-        $slugs = Project::pluck('slug');
+        // withTrashed: seeder stavlja 1 projekat u korpu, a i on mora imati jedinstven slug.
+        $slugs = Project::withTrashed()->pluck('slug');
 
         $this->assertCount(15, $slugs);
+        $this->assertSame(1, Project::onlyTrashed()->count());
         $this->assertSame($slugs->count(), $slugs->unique()->count());
         $this->assertFalse($slugs->contains(fn ($slug) => empty($slug)));
     }

@@ -28,7 +28,17 @@ export function useListFilters(keys) {
     [setSearchParams],
   )
 
-  const resetFilters = useCallback(() => setSearchParams({}), [setSearchParams])
+  // Brise samo SVOJE filtere (i stranu); ostali parametri (npr. ?trashed=only za korpu) ostaju.
+  const resetFilters = useCallback(
+    () =>
+      setSearchParams((current) => {
+        const next = new URLSearchParams(current)
+        for (const key of keys) next.delete(key)
+        next.delete('page')
+        return next
+      }),
+    [setSearchParams, keys],
+  )
 
-  return { filters, has_filters, setFilter, resetFilters }
+  return { filters, has_filters, setFilter, resetFilters, search_params }
 }

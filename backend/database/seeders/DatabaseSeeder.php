@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Project;
 use Illuminate\Database\Seeder;
 
 // Namerno BEZ "WithoutModelEvents" (iz Laravel sablona): model eventi moraju da rade i pri seedovanju,
@@ -20,5 +21,8 @@ class DatabaseSeeder extends Seeder
             ProjectSeeder::class,
             ProjectMemberSeeder::class,
         ]);
+
+        // Jedan projekat (sa clanovima) ide u korpu (soft delete), da korpa u aplikaciji ne bude prazna.
+        Project::inRandomOrder()->first()?->delete();
     }
 }

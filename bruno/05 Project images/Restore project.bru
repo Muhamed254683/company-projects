@@ -1,0 +1,26 @@
+meta {
+  name: Restore project
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{base_url}}/projects/{{project_id}}/restore
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Vraca projekat iz korpe, sa clanovima i slikama.
+  Za projekat koji nije u korpi vraca 409.
+}
+
+assert {
+  res.status: eq 200
+  res.body.data.deleted_at: isNull
+  res.body.data.images_count: eq 1
+}

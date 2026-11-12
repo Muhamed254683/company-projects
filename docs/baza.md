@@ -45,6 +45,7 @@ erDiagram
         date start_date
         date end_date
         decimal budget
+        timestamp deleted_at "NULL = aktivan; datum = u korpi"
     }
     project_user {
         bigint id PK
@@ -106,6 +107,7 @@ Sve tabele imaju i `created_at` / `updated_at` (Laravel ih sam popunjava). U `pr
 | `status` | varchar(20), index | da | `planned` / `active` / `on_hold` / `completed` (PHP enum `ProjectStatus`); podrazumevano `planned`. Index ubrzava filtriranje i brojanje po statusu (dashboard). |
 | `start_date`, `end_date` | date | ne | Pocetak i rok. `date`, a ne `datetime`: vreme u danu nije potrebno. Validacija: rok ne sme biti pre pocetka. |
 | `budget` | decimal(12,2) | ne | **`decimal`, ne `float`**: `float` gresi na decimalama (0.1 + 0.2 != 0.3), a kod novca to ne sme da se desi. Najvise 2 decimale. |
+| `deleted_at` | timestamp | ne | **Soft delete ("korpa")**: `NULL` = aktivan projekat, datum = projekat je u korpi. Laravel (`SoftDeletes`) projekte iz korpe sam izostavlja iz svih upita; mogu da se vrate ili trajno obrisu. Ime i slug projekta iz korpe ostaju "zauzeti", da vracanje nikad ne napravi duplikat. |
 
 ### `project_user` — clanovi projekta (pivot tabela)
 
@@ -146,16 +148,24 @@ po pravilu `member.company_id != project.company_id`.
 
 ### 2. Sta se desava sa projektima i korisnicima kada se obrise kompanija?
 
-- **Projekti se brisu**, jer projekat bez firme nema smisla. Sa njima se brisu i clanstva (`project_user`) i slike, **i fajlovi slika sa diska**.
+- **Projekti se brisu trajno** (i oni u korpi), jer projekat bez firme nema smisla. Sa njima se brisu i clanstva (`project_user`) i slike, **i fajlovi slika sa diska**.
 - **Korisnici ostaju**, samo im `company_id` postaje `NULL`. Korisnik je osoba: moze biti clan projekata drugih firmi i moze preci u drugu firmu; brisanjem bismo izgubili i njegova clanstva na tudjim projektima.
 
 U kodu:
 - strani kljuc `users.company_id` ima `ON DELETE SET NULL`, a `projects.company_id` `ON DELETE CASCADE`;
-- ali projekte ne prepustamo samo bazi: `Company::booted()` -> `deleting` brise svaki projekat **preko Eloquent-a**, jedan po jedan,
-  da bi se za svaki pokrenuo `Project::deleting` i obrisale slike sa diska (vidi pitanje 3);
+- ali projekte ne prepustamo samo bazi: `Company::booted()` -> `deleting` brise svaki projekat (i iz korpe: `withTrashed()`)
+  **trajno, preko Eloquent-a** (`forceDelete()`), jedan po jedan, da bi se za svaki pokrenuo `Project::forceDeleting`
+  i obrisale slike sa diska (vidi pitanje 3);
 - API brise kompaniju u transakciji (`DB::transaction`), pa se baza vraca ako nesto pukne usred brisanja.
 
 ### 3. Sta se desava sa slikama na disku kada se obrise projekat?
+
+Brisanje projekta ima dva koraka (soft delete):
+
+| Akcija | Slike na disku | Redovi u bazi |
+|---|---|---|
+| **U korpu** (`DELETE /api/projects/{id}`) | **ostaju** | projekat dobija `deleted_at`; slike i clanstva ostaju, pa projekat moze da se vrati kakav je bio |
+| **Obrisi trajno** iz korpe (`DELETE /api/projects/{id}/force`) | **brisu se** | projekat, slike i clanstva se brisu |
 
 Baza **ne zna da fajlovi postoje**. `ON DELETE CASCADE` bi obrisao redove iz `project_images`,
 ali bi fajlovi ostali na disku zauvek ("sirocici").
@@ -164,9 +174,12 @@ Zato brisanje radi nas kod, preko model evenata:
 
 ```
 Company::delete()
-  -> Company "deleting":       obrisi svaki projekat preko Eloquent-a
-       -> Project "deleting":  obrisi svaku sliku preko Eloquent-a
+  -> Company "deleting":             trajno obrisi svaki projekat (i iz korpe) preko Eloquent-a
+       -> Project "forceDeleting":   obrisi svaku sliku preko Eloquent-a
             -> ProjectImage "deleted": Storage::disk('public')->delete($path)   <- fajl nestaje sa diska
+
+Project::forceDelete()  (dugme "Obrisi trajno" u korpi)  -> isti lanac od "forceDeleting"
+Project::delete()       (obicno brisanje = korpa)         -> slike se NE diraju
 ```
 
 - Fajl se brise **posle** uspesnog brisanja reda (`deleted`), pa ako brisanje iz baze pukne, slika ostaje i u bazi i na disku.
@@ -176,7 +189,8 @@ Company::delete()
   Zato aplikacija nigde ne brise projekte ni slike masovno.
 
 Ovo proverava i test `backend/tests/Feature/DeletingRemovesImageFilesTest.php`
-(brisanje slike, projekta i kompanije -> fajl vise ne postoji na disku, korisnici ostaju bez firme).
+(brisanje slike, trajno brisanje projekta i brisanje kompanije -> fajl vise ne postoji na disku; projekat u korpi
+zadrzava fajlove; korisnici ostaju bez firme) i `SoftDeleteProjectsTest.php` (korpa, vracanje, trajno brisanje).
 
 ## Kako se baza pravi i puni
 
@@ -189,3 +203,4 @@ php artisan migrate:fresh --seed    # sve iz pocetka (BRISE sve podatke; samo lo
 Seeder pravi: 5 kompanija, 30 zaposlenih (6 po firmi) + 2 frilensera, 15 projekata (3 po firmi)
 sa realnim statusima i datumima, i oko 85 clanstava: na svakom projektu menadzer i tim iz firme
 + 1-2 clana **iz drugih firmi ili frilensera**. Imena, gradovi i adrese su na srpskom (`APP_FAKER_LOCALE=sr_Latn_RS`).
+Na kraju jedan nasumicni projekat ide u korpu, da korpa u aplikaciji ne bude prazna (14 aktivnih + 1 u korpi).

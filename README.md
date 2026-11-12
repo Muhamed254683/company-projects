@@ -66,7 +66,7 @@ Zatim:
 
 ```powershell
 php artisan key:generate     # tajni kljuc aplikacije (upisuje se u .env)
-php artisan migrate --seed   # tabele + realni test podaci (5 firmi, 32 korisnika, 15 projekata)
+php artisan migrate --seed   # tabele + realni test podaci (5 firmi, 32 korisnika, 15 projekata, od toga 1 u korpi)
 php artisan storage:link     # da bi slike projekata bile vidljive u browseru
 npm install                  # Tailwind/Vite za Blade stranice
 npm run build                # pravi CSS za Blade stranice (public/build)
@@ -132,7 +132,7 @@ Ako menjas izgled Blade stranica (`backend/resources/views`), ponovo pokreni `np
 
 Backend testovi koriste **posebnu SQLite bazu u memoriji** (`phpunit.xml`), pa ne diraju MySQL bazu.
 Pokrivaju: obe Blade stranice, pravila za `slug`, brisanje slika sa diska (pri brisanju slike, projekta i kompanije),
-pretragu i filtere na listama i `ProjectFactory` za veliki broj projekata.
+pretragu i filtere na listama, korpu za projekte (soft delete) i `ProjectFactory` za veliki broj projekata.
 
 ### Bruno kolekcija
 
@@ -147,6 +147,9 @@ pretragu i filtere na listama i `ProjectFactory` za veliki broj projekata.
 
 **React (http://localhost:5173)**
 - Kompanije, projekti, korisnici: lista sa paginacijom, dodavanje i izmena (ista forma), brisanje uz potvrdu.
+- **Korpa za projekte (soft delete):** "Obriši" premesta projekat u korpu (slike i clanovi ostaju sacuvani).
+  Na listi projekata prekidac "Aktivni | Korpa"; iz korpe projekat moze da se vrati ("Vrati") ili obrise trajno
+  ("Obriši trajno", tek tada se brisu i slike sa diska).
 - Pretraga i filteri iznad svake liste (kompanije: grad; korisnici: kompanija ili "bez kompanije"; projekti: kompanija i status).
   Pretraga krece 300 ms posle poslednjeg slova, ne razlikuje mala/velika slova ni kvacice ("bondzulic" nalazi "Bondžulić",
   "djurasin" nalazi "Đurašin"), a filteri su u adresi stranice, pa link sa filterima moze da se posalje nekome.
@@ -165,7 +168,8 @@ pretragu i filtere na listama i `ProjectFactory` za veliki broj projekata.
 |---|---|
 | Kompanije | `GET/POST /api/companies`, `GET/PUT/DELETE /api/companies/{id}` |
 | Korisnici | `GET/POST /api/users`, `GET/PUT/DELETE /api/users/{id}` |
-| Projekti | `GET/POST /api/projects`, `GET/PUT/DELETE /api/projects/{id}` |
+| Projekti | `GET/POST /api/projects`, `GET/PUT/DELETE /api/projects/{id}` (DELETE = u korpu) |
+| Korpa projekata | `GET /api/projects?trashed=only`, `POST /api/projects/{id}/restore`, `DELETE /api/projects/{id}/force` (trajno, samo iz korpe) |
 | Clanovi projekta | `GET/POST /api/projects/{id}/members`, `DELETE /api/projects/{id}/members/{user_id}` |
 | Slike projekta | `POST /api/projects/{id}/images`, `DELETE /api/projects/{id}/images/{image_id}` |
 

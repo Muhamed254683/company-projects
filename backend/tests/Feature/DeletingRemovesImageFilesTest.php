@@ -52,14 +52,19 @@ class DeletingRemovesImageFilesTest extends TestCase
         $this->assertDatabaseMissing('project_images', ['id' => $image_id]);
     }
 
-    public function test_deleting_a_project_removes_its_image_files(): void
+    public function test_project_in_trash_keeps_files_and_force_delete_removes_them(): void
     {
         $project = Project::factory()->create();
         $first = $this->uploadImage($project);
         $second = $this->uploadImage($project);
 
+        // 1) Obicno brisanje = korpa: fajlovi i redovi slika OSTAJU (projekat moze da se vrati).
         $this->deleteJson("/api/projects/{$project->id}")->assertNoContent();
+        Storage::disk('public')->assertExists([$first, $second]);
+        $this->assertDatabaseCount('project_images', 2);
 
+        // 2) Trajno brisanje iz korpe: fajlovi nestaju sa diska.
+        $this->deleteJson("/api/projects/{$project->id}/force")->assertNoContent();
         Storage::disk('public')->assertMissing([$first, $second]);
         $this->assertDatabaseCount('project_images', 0);
     }

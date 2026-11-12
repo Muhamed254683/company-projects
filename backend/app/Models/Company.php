@@ -15,10 +15,12 @@ class Company extends Model
 
     protected static function booted(): void
     {
-        // Projekte brisemo preko Eloquent-a, jedan po jedan, a ne samo preko baze (cascade).
-        // Tako se za svaki projekat pokrene Project::deleting i obrisu se njegove slike sa diska.
+        // Projekte kompanije brisemo TRAJNO (i one u korpi: withTrashed), preko Eloquent-a, jedan po jedan.
+        // Tako se za svaki pokrene Project::forceDeleting i obrisu se njegove slike sa diska.
+        // (Samo soft delete ne bi bio dovoljan: baza bi pri brisanju kompanije obrisala redove projekata,
+        // a fajlovi slika bi ostali na disku.)
         static::deleting(function (Company $company) {
-            $company->projects()->each(fn (Project $project) => $project->delete());
+            $company->projects()->withTrashed()->each(fn (Project $project) => $project->forceDelete());
         });
     }
 

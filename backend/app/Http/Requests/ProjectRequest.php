@@ -28,6 +28,8 @@ class ProjectRequest extends FormRequest
                 'string',
                 'max:255',
                 // Ime mora biti jedinstveno samo u okviru iste kompanije.
+                // Rule::unique gleda tabelu direktno, pa racuna i projekte u korpi: tako vracanje iz korpe
+                // nikad ne pravi dva projekta istog imena.
                 Rule::unique('projects', 'name')
                     ->where('company_id', $this->input('company_id'))
                     ->ignore($project),
@@ -39,6 +41,13 @@ class ProjectRequest extends FormRequest
             // Poredimo sa start_date samo ako je on poslat.
             'end_date' => ['nullable', 'date', Rule::when($this->filled('start_date'), 'after_or_equal:start_date')],
             'budget' => ['nullable', 'numeric', 'decimal:0,2', 'min:0', 'max:9999999999.99'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'name.unique' => 'This company already has a project with this name (it may be in the trash).',
         ];
     }
 }

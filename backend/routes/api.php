@@ -12,6 +12,10 @@ Route::apiResource('companies', CompanyController::class);
 Route::apiResource('users', UserController::class);
 Route::apiResource('projects', ProjectController::class);
 
+// Korpa (soft delete). withTrashed(): Laravel pronalazi i projekat koji je u korpi (inace bi vratio 404).
+Route::post('projects/{project}/restore', [ProjectController::class, 'restore'])->withTrashed();
+Route::delete('projects/{project}/force', [ProjectController::class, 'forceDestroy'])->withTrashed();
+
 // Clanovi projekta (ugnezdene rute: clan uvek pripada nekom projektu).
 Route::get('projects/{project}/members', [ProjectMemberController::class, 'index']);
 Route::post('projects/{project}/members', [ProjectMemberController::class, 'store']);

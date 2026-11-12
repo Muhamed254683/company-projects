@@ -1,0 +1,32 @@
+meta {
+  name: List trashed projects
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url}}/projects?trashed=only&per_page=100
+  body: none
+  auth: none
+}
+
+params:query {
+  trashed: only
+  per_page: 100
+}
+
+headers {
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("projekat je u korpi, sa datumom brisanja", function () {
+    const project = res.body.data.find((p) => p.id === Number(bru.getVar("project_id")));
+    expect(project).to.not.equal(undefined);
+    expect(project.deleted_at).to.not.equal(null);
+  });
+}

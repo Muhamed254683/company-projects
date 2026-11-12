@@ -1,5 +1,5 @@
 meta {
-  name: Delete project (cleanup)
+  name: Delete project - to trash
   type: http
   seq: 5
 }
@@ -15,7 +15,8 @@ headers {
 }
 
 docs {
-  Brise test projekat iz foldera "03 Projects" zajedno sa preostalom slikom (i sa diska).
+  Obicno brisanje premesta projekat u korpu (soft delete).
+  Slike (i na disku) i clanovi ostaju, da bi projekat mogao da se vrati.
 }
 
 assert {
