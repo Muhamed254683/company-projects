@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ReorderProjectImagesRequest;
 use App\Http\Requests\UploadProjectImagesRequest;
 use App\Http\Resources\ProjectImageResource;
 use App\Models\Project;
 use App\Models\ProjectImage;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -50,6 +52,22 @@ class ProjectImageController extends Controller
         }
 
         return ProjectImageResource::collection($images)->response()->setStatusCode(201);
+    }
+
+    /**
+     * PUT /api/projects/{project}/images/order   { "image_ids": [5, 2, 9] }
+     * Novi redosled galerije: prva u listi dobija poziciju 1, druga 2...
+     * ReorderProjectImagesRequest proverava da lista sadrzi tacno sve slike ovog projekta.
+     */
+    public function reorder(ReorderProjectImagesRequest $request, Project $project): AnonymousResourceCollection
+    {
+        DB::transaction(function () use ($request, $project) {
+            foreach ($request->input('image_ids') as $index => $image_id) {
+                $project->images()->whereKey($image_id)->update(['position' => $index + 1]);
+            }
+        });
+
+        return ProjectImageResource::collection($project->images()->ordered()->get());
     }
 
     /**

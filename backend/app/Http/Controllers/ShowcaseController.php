@@ -14,7 +14,8 @@ class ShowcaseController extends Controller
         $project->load([
             'company',
             'members' => fn ($query) => $query->with('company')->orderBy('last_name')->orderBy('first_name'),
-            'images' => fn ($query) => $query->latest()->latest('id'),
+            // Isti redosled kao u galeriji aplikacije (position).
+            'images' => fn ($query) => $query->ordered(),
         ]);
 
         return view('showcase', [

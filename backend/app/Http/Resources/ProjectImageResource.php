@@ -13,6 +13,8 @@ class ProjectImageResource extends JsonResource
         return [
             'id' => $this->id,
             'project_id' => $this->project_id,
+            // Mesto u galeriji projekta (1 = prva).
+            'position' => $this->position,
             // Puna adresa slike za <img src="...">, npr. http://localhost:8000/storage/projects/1/abc.jpg
             'url' => Storage::disk('public')->url($this->path),
             'original_name' => $this->original_name,

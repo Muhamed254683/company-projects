@@ -138,7 +138,7 @@ Ako menjas izgled Blade stranica (`backend/resources/views`), ponovo pokreni `np
 
 Backend testovi koriste **posebnu SQLite bazu u memoriji** (`phpunit.xml`), pa ne diraju MySQL bazu.
 Pokrivaju: obe Blade stranice, pravila za `slug`, brisanje slika sa diska (pri brisanju slike, projekta i kompanije),
-pretragu i filtere na listama, korpu za projekte (soft delete), prijavu i registraciju (token, odjava, 401, ogranicenje pokusaja)
+pretragu i filtere na listama, korpu za projekte (soft delete), redosled slika, prijavu i registraciju (token, odjava, 401, ogranicenje pokusaja)
 i `ProjectFactory` za veliki broj projekata.
 
 ### Bruno kolekcija
@@ -176,6 +176,8 @@ i `ProjectFactory` za veliki broj projekata.
 - Detalji projekta: clanovi sa ulogama (dodavanje i uklanjanje); clanovi iz druge firme i frilenseri su oznaceni zuto.
 - Galerija: upload vise slika odjednom (jpg/png/webp, do 2 MB po slici, 7,5 MB ukupno, 10 slika), uvecanje, brisanje (i sa diska).
   Velicina se proverava vec u browseru, pre slanja.
+- **Redosled slika:** sliku prevuces na novo mesto (drag & drop) ili je pomeris dugmadima ← →. Redosled se odmah cuva u bazi
+  i vazi svuda: u aplikaciji, na javnoj stranici projekta i u API-ju. Nova slika ide na kraj, a brisanje ne kvari redosled.
 
 **Blade (http://localhost:8000)** — Laravel ih pravi direktno iz baze, ne preko API-ja
 - `/` dashboard: broj kompanija, projekata i korisnika, projekti po statusu, poslednji projekti.
@@ -191,7 +193,7 @@ i `ProjectFactory` za veliki broj projekata.
 | Projekti | `GET/POST /api/projects`, `GET/PUT/DELETE /api/projects/{id}` (DELETE = u korpu) |
 | Korpa projekata | `GET /api/projects?trashed=only`, `POST /api/projects/{id}/restore`, `DELETE /api/projects/{id}/force` (trajno, samo iz korpe) |
 | Clanovi projekta | `GET/POST /api/projects/{id}/members`, `DELETE /api/projects/{id}/members/{user_id}` |
-| Slike projekta | `POST /api/projects/{id}/images`, `DELETE /api/projects/{id}/images/{image_id}` |
+| Slike projekta | `POST /api/projects/{id}/images`, `PUT /api/projects/{id}/images/order` (redosled), `DELETE /api/projects/{id}/images/{image_id}` |
 
 - Svaki zahtev treba da ima header `Accept: application/json`.
 - **Prijava (Laravel Sanctum, token):** svi endpointi osim `POST /api/login` i `POST /api/register` traze header
@@ -211,6 +213,8 @@ i `ProjectFactory` za veliki broj projekata.
   Vise reci znaci da svaka mora da se nadje: `?search=milin bolic`.
 - Slike: `multipart/form-data`, polje `images[]`, jpg/png/webp, najvise 2 MB po slici i 10 po zahtevu;
   ceo zahtev najvise 8 MB (PHP: `upload_max_filesize = 2M`, `post_max_size = 8M` u `php.ini`).
+- Redosled slika: `PUT /api/projects/{id}/images/order` sa `{ "image_ids": [7, 5, 6] }` (prva u listi je prva u galeriji).
+  Lista mora da sadrzi tacno sve slike projekta, inace 422. Slike u odgovorima imaju polje `position` (1, 2, 3...).
 - Izmena sa fajlovima (`multipart/form-data`) ide kao `POST` sa poljem `_method=PUT`,
   jer PHP ne cita multipart telo kod pravih `PUT` zahteva.
 

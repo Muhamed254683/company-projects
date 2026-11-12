@@ -34,5 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Slike projekta. scopeBindings: slika MORA pripadati projektu iz URL-a, inace 404.
     Route::post('projects/{project}/images', [ProjectImageController::class, 'store']);
+    // Redosled galerije (ide PRE rute sa {image}, da "order" ne bi bio shvacen kao id slike).
+    Route::put('projects/{project}/images/order', [ProjectImageController::class, 'reorder']);
     Route::delete('projects/{project}/images/{image}', [ProjectImageController::class, 'destroy'])->scopeBindings();
 });

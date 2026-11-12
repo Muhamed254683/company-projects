@@ -1,0 +1,35 @@
+meta {
+  name: Reorder images - invalid 422
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{base_url}}/projects/{{project_id}}/images/order
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "image_ids": [{{image_id}}]
+  }
+}
+
+docs {
+  Lista mora da sadrzi TACNO sve slike projekta (ovde nedostaje jedna) -> 422, redosled se ne menja.
+}
+
+assert {
+  res.status: eq 422
+}
+
+tests {
+  test("poruka za nepotpunu listu", function () {
+    expect(res.body.errors.image_ids[0]).to.equal("The list must contain exactly all images of this project.");
+  });
+}

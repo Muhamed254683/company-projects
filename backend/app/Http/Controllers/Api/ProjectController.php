@@ -113,7 +113,8 @@ class ProjectController extends Controller
             ->load([
                 'company',
                 'members' => fn ($query) => $query->with('company')->orderBy('last_name')->orderBy('first_name'),
-                'images' => fn ($query) => $query->latest(),
+                // Redosled iz galerije (position), koji korisnik menja prevlacenjem.
+                'images' => fn ($query) => $query->ordered(),
             ])
             ->loadCount(['members', 'images']);
     }

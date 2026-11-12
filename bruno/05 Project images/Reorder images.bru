@@ -1,0 +1,37 @@
+meta {
+  name: Reorder images
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{base_url}}/projects/{{project_id}}/images/order
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "image_ids": [{{image_id_2}}, {{image_id}}]
+  }
+}
+
+docs {
+  Novi redosled galerije: prva slika u listi dobija poziciju 1, druga 2...
+  Lista mora da sadrzi tacno sve slike projekta. Isti redosled vazi u aplikaciji i na javnoj stranici (showcase).
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("druga otpremljena slika je sada prva", function () {
+    expect(res.body.data[0].id).to.equal(Number(bru.getVar("image_id_2")));
+    expect(res.body.data.map((image) => image.position)).to.deep.equal([1, 2]);
+  });
+}

@@ -61,6 +61,7 @@ erDiagram
         varchar original_name
         varchar mime_type
         int size
+        int position
     }
 ```
 
@@ -133,6 +134,7 @@ po pravilu `member.company_id != project.company_id`.
 | `original_name` | varchar(255) | da | Ime fajla kako ga je korisnik poslao, za prikaz. Na disku je nasumicno ime, da se dva `slika.jpg` ne bi pregazila. |
 | `mime_type` | varchar(100) | da | Tip fajla koji je odredio server iz sadrzaja (npr. `image/png`), ne iz ekstenzije. |
 | `size` | int unsigned | da | Velicina u bajtovima, za prikaz ("1,2 MB"). |
+| `position` | int unsigned, index (`project_id`, `position`) | da | Mesto slike u galeriji (1, 2, 3...), korisnik ga menja prevlacenjem. Nova slika dobija sledeci broj (na kraj). Isti redosled vazi u aplikaciji, na javnoj stranici i u API-ju. |
 
 ## Odgovori na pitanja iz zadatka
 
