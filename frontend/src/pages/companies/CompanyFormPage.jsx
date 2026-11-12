@@ -5,6 +5,7 @@ import Alert from '../../components/ui/Alert.jsx'
 import Button from '../../components/ui/Button.jsx'
 import Input from '../../components/ui/Input.jsx'
 import PageHeader from '../../components/ui/PageHeader.jsx'
+import { useToast } from '../../components/toast/toastContext.js'
 import Textarea from '../../components/ui/Textarea.jsx'
 
 const EMPTY_COMPANY = {
@@ -32,6 +33,7 @@ function CompanyFormPage() {
   const { id } = useParams()
   const is_edit = id !== undefined
   const navigate = useNavigate()
+  const toast = useToast()
 
   const [values, setValues] = useState(EMPTY_COMPANY)
   const [errors, setErrors] = useState({})
@@ -86,9 +88,9 @@ function CompanyFormPage() {
         body: values,
       })
 
-      navigate('/companies', {
-        state: { message: is_edit ? `Kompanija "${values.name}" je izmenjena.` : `Kompanija "${values.name}" je dodata.` },
-      })
+      // Poruka "prezivi" prelazak na listu, jer ToastProvider je iznad svih stranica.
+      toast.success(is_edit ? `Kompanija "${values.name}" je izmenjena.` : `Kompanija "${values.name}" je dodata.`)
+      navigate('/companies')
     } catch (err) {
       const validation_errors = getValidationErrors(err)
 
@@ -96,7 +98,8 @@ function CompanyFormPage() {
         setErrors(validation_errors)
         setGeneralError('Proveri označena polja.')
       } else {
-        setGeneralError(err.message)
+        // Neocekivana greska (npr. server ne radi): crvena notifikacija.
+        toast.error(`Čuvanje nije uspelo: ${err.message}`)
       }
     } finally {
       setSaving(false)

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { apiRequest } from '../../api/client.js'
 import ProjectStatusBadge from '../../components/ProjectStatusBadge.jsx'
 import Alert from '../../components/ui/Alert.jsx'
@@ -11,6 +11,7 @@ import Pagination from '../../components/ui/Pagination.jsx'
 import SearchInput from '../../components/ui/SearchInput.jsx'
 import Select from '../../components/ui/Select.jsx'
 import Table from '../../components/ui/Table.jsx'
+import { useToast } from '../../components/toast/toastContext.js'
 import { PROJECT_STATUSES } from '../../constants/projectStatus.js'
 import { useCompanyOptions } from '../../hooks/useCompanyOptions.js'
 import { useListFilters } from '../../hooks/useListFilters.js'
@@ -38,7 +39,7 @@ function ViewTabs({ in_trash, onChange }) {
 }
 
 function ProjectListPage() {
-  const location = useLocation()
+  const toast = useToast()
   const { filters, has_filters, setFilter, resetFilters, search_params } = useListFilters(FILTER_KEYS)
   // "trashed" ide API-ju, ali nije "filter": "Ponisti filtere" ne izbacuje iz korpe.
   const { rows, meta, loading, error, setPage, reload } = usePaginatedList('/projects', {
@@ -47,16 +48,11 @@ function ProjectListPage() {
   const { options: company_options } = useCompanyOptions()
   const in_trash = search_params.get('trashed') === 'only'
 
-  const [message, setMessage] = useState(location.state?.message ?? null)
-  const [action_error, setActionError] = useState(null)
-
   // Otvorena potvrda: { type: 'trash' | 'force', project } ili null.
   const [dialog, setDialog] = useState(null)
   const [working, setWorking] = useState(false)
-  const [dialog_error, setDialogError] = useState(null)
 
   function openDialog(type, project) {
-    setDialogError(null)
     setDialog({ type, project })
   }
 
@@ -64,35 +60,36 @@ function ProjectListPage() {
   async function handleConfirm() {
     const { type, project } = dialog
     setWorking(true)
-    setDialogError(null)
 
     try {
       if (type === 'trash') {
         await apiRequest(`/projects/${project.id}`, { method: 'DELETE' })
-        setMessage(`Projekat "${project.name}" je premešten u korpu.`)
+        // "Ponisti" u notifikaciji odmah vraca projekat iz korpe.
+        toast.success(`Projekat "${project.name}" je premešten u korpu.`, {
+          action: { label: 'Poništi', onClick: () => handleRestore(project) },
+        })
       } else {
         await apiRequest(`/projects/${project.id}/force`, { method: 'DELETE' })
-        setMessage(`Projekat "${project.name}" je trajno obrisan.`)
+        toast.success(`Projekat "${project.name}" je trajno obrisan.`)
       }
-      setDialog(null)
       reload()
     } catch (err) {
-      setDialogError(err.message)
+      // Neocekivana greska (npr. server ne radi): crvena notifikacija.
+      toast.error(`Brisanje nije uspelo: ${err.message}`)
     } finally {
       setWorking(false)
+      setDialog(null)
     }
   }
 
   // Vracanje iz korpe ne unistava nista, pa ne trazi potvrdu.
   async function handleRestore(project) {
-    setActionError(null)
-
     try {
       await apiRequest(`/projects/${project.id}/restore`, { method: 'POST' })
-      setMessage(`Projekat "${project.name}" je vraćen iz korpe.`)
+      toast.success(`Projekat "${project.name}" je vraćen iz korpe.`)
       reload()
     } catch (err) {
-      setActionError(err.message)
+      toast.error(`Vraćanje nije uspelo: ${err.message}`)
     }
   }
 
@@ -164,16 +161,6 @@ function ProjectListPage() {
     <div>
       <PageHeader title="Projekti" actions={<Button to="/projects/new">+ Dodaj projekat</Button>} />
 
-      {message && (
-        <div className="mb-4">
-          <Alert type="success">{message}</Alert>
-        </div>
-      )}
-      {action_error && (
-        <div className="mb-4">
-          <Alert>{action_error}</Alert>
-        </div>
-      )}
 
       <ViewTabs in_trash={in_trash} onChange={(trash) => setFilter('trashed', trash ? 'only' : '')} />
 
@@ -217,7 +204,6 @@ function ProjectListPage() {
         title={dialog?.type === 'force' ? 'Trajno brisanje' : 'Premeštanje u korpu'}
         confirmLabel={dialog?.type === 'force' ? 'Obriši trajno' : 'Premesti u korpu'}
         loading={working}
-        error={dialog_error}
         onCancel={() => setDialog(null)}
         onConfirm={handleConfirm}
         message={

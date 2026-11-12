@@ -147,6 +147,9 @@ pretragu i filtere na listama, korpu za projekte (soft delete) i `ProjectFactory
 
 **React (http://localhost:5173)**
 - Kompanije, projekti, korisnici: lista sa paginacijom, dodavanje i izmena (ista forma), brisanje uz potvrdu.
+- **Notifikacije:** posle svake uspesne akcije (cuvanje, brisanje, korpa, clanovi, slike) dole desno se pojavi kratka poruka;
+  zelena nestaje posle 4 s, crvena (neocekivana greska, npr. server ne radi) posle 8 s; dok je mis iznad nje, ne nestaje.
+  Posle premestanja projekta u korpu poruka ima dugme "Poništi". Greske validacije su i dalje ispod polja u formi.
 - **Korpa za projekte (soft delete):** "Obriši" premesta projekat u korpu (slike i clanovi ostaju sacuvani).
   Na listi projekata prekidac "Aktivni | Korpa"; iz korpe projekat moze da se vrati ("Vrati") ili obrise trajno
   ("Obriši trajno", tek tada se brisu i slike sa diska).
@@ -220,7 +223,7 @@ Lozinke i adrese su u `.env` fajlovima (nisu u Git-u); sabloni sa objasnjenjima 
 | `SQLSTATE[HY000] [1049] Unknown database` | Baza nije napravljena: korak 2.2. |
 | `Vite manifest not found` na http://localhost:8000 | U `backend/` nije pokrenut `npm install` i `npm run build`. |
 | Slike se ne vide (HTTP 403 na `/storage/...`) | U `backend/` nije pokrenut `php artisan storage:link`. |
-| React javlja `Failed to fetch` | Backend ne radi (`php artisan serve`), ili adresa frontenda nije u `FRONTEND_URL` (CORS), ili je pogresan `VITE_API_URL`. |
+| React javlja "Server ne odgovara. Proveri da li backend radi" | Backend ne radi (`php artisan serve`), ili adresa frontenda nije u `FRONTEND_URL` (CORS), ili je pogresan `VITE_API_URL`. |
 | `npm run dev` javlja `Cannot find native binding` | Poznat npm bag: obrisi `node_modules` i `package-lock.json`, pa ponovo `npm install`. |
 | Upload preko API-ja (npr. Bruno): "failed to upload" ili "The POST data is too large." | Slika je veca od 2 MB, ili su sve zajedno vece od 8 MB (`upload_max_filesize` / `post_max_size` u `php.ini`). React aplikacija ovo proverava pre slanja i javlja na srpskom. |
 | Vite pokrene frontend na portu 5174 | Port 5173 je zauzet; zatvori drugi Vite ili dodaj novu adresu u `FRONTEND_URL` u `backend/.env`. |

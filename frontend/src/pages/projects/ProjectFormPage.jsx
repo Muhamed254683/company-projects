@@ -5,6 +5,7 @@ import Alert from '../../components/ui/Alert.jsx'
 import Button from '../../components/ui/Button.jsx'
 import Input from '../../components/ui/Input.jsx'
 import PageHeader from '../../components/ui/PageHeader.jsx'
+import { useToast } from '../../components/toast/toastContext.js'
 import Select from '../../components/ui/Select.jsx'
 import Textarea from '../../components/ui/Textarea.jsx'
 import { PROJECT_STATUSES } from '../../constants/projectStatus.js'
@@ -50,6 +51,7 @@ function ProjectFormPage() {
   const { id } = useParams()
   const is_edit = id !== undefined
   const navigate = useNavigate()
+  const toast = useToast()
   const { options: company_options, error: companies_error } = useCompanyOptions()
 
   const [values, setValues] = useState(EMPTY_PROJECT)
@@ -101,9 +103,9 @@ function ProjectFormPage() {
         body: toRequestBody(values),
       })
 
-      navigate('/projects', {
-        state: { message: is_edit ? `Projekat "${values.name}" je izmenjen.` : `Projekat "${values.name}" je dodat.` },
-      })
+      // Poruka "prezivi" prelazak na listu, jer ToastProvider je iznad svih stranica.
+      toast.success(is_edit ? `Projekat "${values.name}" je izmenjen.` : `Projekat "${values.name}" je dodat.`)
+      navigate('/projects')
     } catch (err) {
       const validation_errors = getValidationErrors(err)
 
@@ -111,7 +113,8 @@ function ProjectFormPage() {
         setErrors(validation_errors)
         setGeneralError('Proveri označena polja.')
       } else {
-        setGeneralError(err.message)
+        // Neocekivana greska (npr. server ne radi): crvena notifikacija.
+        toast.error(`Čuvanje nije uspelo: ${err.message}`)
       }
     } finally {
       setSaving(false)

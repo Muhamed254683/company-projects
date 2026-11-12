@@ -6,6 +6,7 @@ import Button from '../ui/Button.jsx'
 import ConfirmDialog from '../ui/ConfirmDialog.jsx'
 import Select from '../ui/Select.jsx'
 import Table from '../ui/Table.jsx'
+import { useToast } from '../toast/toastContext.js'
 
 // Clan je "spoljni" kada nije iz kompanije kojoj projekat pripada (druga firma ili frilenser).
 function isExternal(member, project) {
@@ -21,16 +22,15 @@ function ExternalBadge({ member }) {
 // Clanovi projekta: tabela, dodavanje i uklanjanje.
 // onChanged: poziva se posle svake izmene, da roditelj ponovo ucita projekat.
 function ProjectMembers({ project, onChanged }) {
+  const toast = useToast()
   const [all_users, setAllUsers] = useState([])
   const [new_member, setNewMember] = useState({ user_id: '', role: '' })
   const [errors, setErrors] = useState({})
   const [adding, setAdding] = useState(false)
-  const [message, setMessage] = useState(null)
   const [general_error, setGeneralError] = useState(null)
 
   const [member_to_remove, setMemberToRemove] = useState(null)
   const [removing, setRemoving] = useState(false)
-  const [remove_error, setRemoveError] = useState(null)
 
   // Svi korisnici, za padajucu listu (API vraca najvise 100 po strani).
   useEffect(() => {
@@ -70,7 +70,6 @@ function ProjectMembers({ project, onChanged }) {
     setAdding(true)
     setErrors({})
     setGeneralError(null)
-    setMessage(null)
 
     try {
       const response = await apiRequest(`/projects/${project.id}/members`, {
@@ -81,14 +80,15 @@ function ProjectMembers({ project, onChanged }) {
         },
       })
 
-      setMessage(`${response.data.full_name} je dodat kao ${projectRoleLabel(response.data.role).toLowerCase()}.`)
+      toast.success(`${response.data.full_name} je dodat kao ${projectRoleLabel(response.data.role).toLowerCase()}.`)
       setNewMember({ user_id: '', role: '' })
       onChanged()
     } catch (err) {
       const validation_errors = getValidationErrors(err)
 
       if (Object.keys(validation_errors).length > 0) setErrors(validation_errors)
-      else setGeneralError(err.message)
+      // Neocekivana greska (npr. server ne radi): crvena notifikacija.
+      else toast.error(`Dodavanje nije uspelo: ${err.message}`)
     } finally {
       setAdding(false)
     }
@@ -96,15 +96,15 @@ function ProjectMembers({ project, onChanged }) {
 
   async function handleRemove() {
     setRemoving(true)
-    setRemoveError(null)
 
     try {
       await apiRequest(`/projects/${project.id}/members/${member_to_remove.id}`, { method: 'DELETE' })
-      setMessage(`${member_to_remove.full_name} je uklonjen sa projekta.`)
+      toast.success(`${member_to_remove.full_name} je uklonjen sa projekta.`)
       setMemberToRemove(null)
       onChanged()
     } catch (err) {
-      setRemoveError(err.message)
+      toast.error(`Uklanjanje nije uspelo: ${err.message}`)
+      setMemberToRemove(null)
     } finally {
       setRemoving(false)
     }
@@ -133,10 +133,7 @@ function ProjectMembers({ project, onChanged }) {
         <Button
           size="sm"
           variant="secondary"
-          onClick={() => {
-            setRemoveError(null)
-            setMemberToRemove(member)
-          }}
+          onClick={() => setMemberToRemove(member)}
         >
           Ukloni
         </Button>
@@ -157,7 +154,6 @@ function ProjectMembers({ project, onChanged }) {
         </p>
       </div>
 
-      {message && <Alert type="success">{message}</Alert>}
       {general_error && <Alert>{general_error}</Alert>}
 
       <Table columns={columns} rows={rows} rowClassName={(row) => (row.external ? 'bg-amber-50 hover:bg-amber-100' : '')} emptyMessage="Projekat još nema članova." />
@@ -195,7 +191,6 @@ function ProjectMembers({ project, onChanged }) {
         title="Uklanjanje člana"
         confirmLabel="Ukloni"
         loading={removing}
-        error={remove_error}
         onCancel={() => setMemberToRemove(null)}
         onConfirm={handleRemove}
         message={

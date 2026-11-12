@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useLocation } from 'react-router-dom'
 import { apiRequest } from '../../api/client.js'
 import Alert from '../../components/ui/Alert.jsx'
 import Button from '../../components/ui/Button.jsx'
@@ -10,6 +9,7 @@ import FilterBar from '../../components/ui/FilterBar.jsx'
 import SearchInput from '../../components/ui/SearchInput.jsx'
 import Select from '../../components/ui/Select.jsx'
 import Table from '../../components/ui/Table.jsx'
+import { useToast } from '../../components/toast/toastContext.js'
 import { useCompanyOptions } from '../../hooks/useCompanyOptions.js'
 import { useListFilters } from '../../hooks/useListFilters.js'
 import { usePaginatedList } from '../../hooks/usePaginatedList.js'
@@ -17,7 +17,7 @@ import { usePaginatedList } from '../../hooks/usePaginatedList.js'
 const FILTER_KEYS = ['search', 'company_id']
 
 function UserListPage() {
-  const location = useLocation()
+  const toast = useToast()
   const { filters, has_filters, setFilter, resetFilters } = useListFilters(FILTER_KEYS)
   const { rows, meta, loading, error, setPage, reload } = usePaginatedList('/users', { filter_keys: FILTER_KEYS })
 
@@ -25,27 +25,25 @@ function UserListPage() {
   const { options: company_options } = useCompanyOptions()
   const company_filter_options = [{ value: 'none', label: '— bez kompanije (frilenseri) —' }, ...company_options]
 
-  const [message, setMessage] = useState(location.state?.message ?? null)
   const [user_to_delete, setUserToDelete] = useState(null)
   const [deleting, setDeleting] = useState(false)
-  const [delete_error, setDeleteError] = useState(null)
 
   function openDeleteDialog(user) {
-    setDeleteError(null)
     setUserToDelete(user)
   }
 
   async function handleDelete() {
     setDeleting(true)
-    setDeleteError(null)
 
     try {
       await apiRequest(`/users/${user_to_delete.id}`, { method: 'DELETE' })
-      setMessage(`Korisnik "${user_to_delete.full_name}" je obrisan.`)
+      toast.success(`Korisnik "${user_to_delete.full_name}" je obrisan.`)
       setUserToDelete(null)
       reload()
     } catch (err) {
-      setDeleteError(err.message)
+      // Neocekivana greska (npr. server ne radi): crvena notifikacija, potvrda se zatvara.
+      toast.error(`Brisanje nije uspelo: ${err.message}`)
+      setUserToDelete(null)
     } finally {
       setDeleting(false)
     }
@@ -87,12 +85,6 @@ function UserListPage() {
     <div>
       <PageHeader title="Korisnici" actions={<Button to="/users/new">+ Dodaj korisnika</Button>} />
 
-      {message && (
-        <div className="mb-4">
-          <Alert type="success">{message}</Alert>
-        </div>
-      )}
-
       <FilterBar has_filters={has_filters} onReset={resetFilters}>
         <SearchInput
           value={filters.search}
@@ -127,7 +119,6 @@ function UserListPage() {
       <ConfirmDialog
         open={user_to_delete !== null}
         loading={deleting}
-        error={delete_error}
         onCancel={() => setUserToDelete(null)}
         onConfirm={handleDelete}
         message={

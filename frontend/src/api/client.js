@@ -9,11 +9,23 @@ if (!API_URL) {
 // http://localhost:8000/api -> http://localhost:8000
 export const BACKEND_URL = API_URL.replace(/\/api\/?$/, '')
 
-// Greska koju bacamo kada API vrati status 4xx/5xx.
+// Laravelova poruka za nepostojeci model ("No query results for model [App\Models\Company] 5")
+// je tehnicka; korisniku prikazujemo razumljivu.
+function readableMessage(status, data) {
+  const message = data?.message ?? ''
+
+  if (status === 404 && (message === '' || message.startsWith('No query results') || message === 'Not Found')) {
+    return 'Traženi podatak ne postoji (možda je obrisan u međuvremenu).'
+  }
+
+  return message || `API greška (HTTP ${status})`
+}
+
+// Greska koju bacamo kada API vrati status 4xx/5xx (ili 0 kada server uopste ne odgovara).
 // status: HTTP status (npr. 404, 422), data: telo odgovora (npr. { message, errors }).
 export class ApiError extends Error {
   constructor(status, data) {
-    super(data?.message || `API greska (HTTP ${status})`)
+    super(readableMessage(status, data))
     this.status = status
     this.data = data
   }
@@ -32,7 +44,13 @@ export async function apiRequest(path, { method = 'GET', body } = {}) {
     options.body = JSON.stringify(body)
   }
 
-  const response = await fetch(`${API_URL}${path}`, options)
+  let response
+  try {
+    response = await fetch(`${API_URL}${path}`, options)
+  } catch {
+    // fetch baca gresku samo kada odgovora uopste nema (server ugasen, pogresan VITE_API_URL, CORS).
+    throw new ApiError(0, { message: 'Server ne odgovara. Proveri da li backend radi (php artisan serve).' })
+  }
 
   // 204 No Content (npr. posle brisanja) nema telo.
   const data = response.status === 204 ? null : await response.json()

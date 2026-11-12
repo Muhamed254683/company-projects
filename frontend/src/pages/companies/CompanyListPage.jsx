@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useLocation } from 'react-router-dom'
 import { apiRequest } from '../../api/client.js'
 import Alert from '../../components/ui/Alert.jsx'
 import Button from '../../components/ui/Button.jsx'
@@ -10,6 +9,7 @@ import FilterBar from '../../components/ui/FilterBar.jsx'
 import SearchInput from '../../components/ui/SearchInput.jsx'
 import Select from '../../components/ui/Select.jsx'
 import Table from '../../components/ui/Table.jsx'
+import { useToast } from '../../components/toast/toastContext.js'
 import { useCompanyOptions } from '../../hooks/useCompanyOptions.js'
 import { useListFilters } from '../../hooks/useListFilters.js'
 import { usePaginatedList } from '../../hooks/usePaginatedList.js'
@@ -17,7 +17,7 @@ import { usePaginatedList } from '../../hooks/usePaginatedList.js'
 const FILTER_KEYS = ['search', 'city']
 
 function CompanyListPage() {
-  const location = useLocation()
+  const toast = useToast()
   const { filters, has_filters, setFilter, resetFilters } = useListFilters(FILTER_KEYS)
   const { rows, meta, loading, error, setPage, reload } = usePaginatedList('/companies', { filter_keys: FILTER_KEYS })
 
@@ -27,30 +27,27 @@ function CompanyListPage() {
     .sort((a, b) => a.localeCompare(b, 'sr'))
     .map((city) => ({ value: city, label: city }))
 
-  // Poruka koju je forma poslala posle cuvanja (navigate(..., { state: { message } })).
-  const [message, setMessage] = useState(location.state?.message ?? null)
 
   // Kompanija za koju je otvorena potvrda brisanja (null = potvrda zatvorena).
   const [company_to_delete, setCompanyToDelete] = useState(null)
   const [deleting, setDeleting] = useState(false)
-  const [delete_error, setDeleteError] = useState(null)
 
   function openDeleteDialog(company) {
-    setDeleteError(null)
     setCompanyToDelete(company)
   }
 
   async function handleDelete() {
     setDeleting(true)
-    setDeleteError(null)
 
     try {
       await apiRequest(`/companies/${company_to_delete.id}`, { method: 'DELETE' })
-      setMessage(`Kompanija "${company_to_delete.name}" je obrisana.`)
+      toast.success(`Kompanija "${company_to_delete.name}" je obrisana.`)
       setCompanyToDelete(null)
       reload()
     } catch (err) {
-      setDeleteError(err.message)
+      // Neocekivana greska (npr. server ne radi): crvena notifikacija, potvrda se zatvara.
+      toast.error(`Brisanje nije uspelo: ${err.message}`)
+      setCompanyToDelete(null)
     } finally {
       setDeleting(false)
     }
@@ -83,12 +80,6 @@ function CompanyListPage() {
   return (
     <div>
       <PageHeader title="Kompanije" actions={<Button to="/companies/new">+ Dodaj kompaniju</Button>} />
-
-      {message && (
-        <div className="mb-4">
-          <Alert type="success">{message}</Alert>
-        </div>
-      )}
 
       <FilterBar has_filters={has_filters} onReset={resetFilters}>
         <SearchInput
@@ -125,7 +116,6 @@ function CompanyListPage() {
       <ConfirmDialog
         open={company_to_delete !== null}
         loading={deleting}
-        error={delete_error}
         onCancel={() => setCompanyToDelete(null)}
         onConfirm={handleDelete}
         message={

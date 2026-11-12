@@ -5,6 +5,7 @@ import Alert from '../ui/Alert.jsx'
 import Button from '../ui/Button.jsx'
 import ConfirmDialog from '../ui/ConfirmDialog.jsx'
 import Modal from '../ui/Modal.jsx'
+import { useToast } from '../toast/toastContext.js'
 
 // Ogranicenja moraju da prate backend i PHP (php.ini):
 // - Laravel: najvise 10 slika po zahtevu (UploadProjectImagesRequest)
@@ -51,16 +52,15 @@ function uploadErrorMessages(errors, files) {
 // Galerija slika projekta: upload vise slika odjednom, pregled, uvecanje i brisanje.
 // onChanged: poziva se posle svake izmene, da roditelj ponovo ucita projekat.
 function ProjectGallery({ project, onChanged }) {
+  const toast = useToast()
   const file_input = useRef(null)
   const [files, setFiles] = useState([])
   const [uploading, setUploading] = useState(false)
   const [upload_errors, setUploadErrors] = useState([])
-  const [message, setMessage] = useState(null)
 
   const [preview_image, setPreviewImage] = useState(null)
   const [image_to_delete, setImageToDelete] = useState(null)
   const [deleting, setDeleting] = useState(false)
-  const [delete_error, setDeleteError] = useState(null)
 
   function handleFilesChange(event) {
     // event.target.files je FileList; pretvaramo ga u obican niz.
@@ -91,11 +91,10 @@ function ProjectGallery({ project, onChanged }) {
 
     setUploading(true)
     setUploadErrors([])
-    setMessage(null)
 
     try {
       const response = await apiRequest(`/projects/${project.id}/images`, { method: 'POST', body: form_data })
-      setMessage(response.data.length === 1 ? 'Slika je otpremljena.' : `Otpremljeno slika: ${response.data.length}.`)
+      toast.success(response.data.length === 1 ? 'Slika je otpremljena.' : `Otpremljeno slika: ${response.data.length}.`)
       setFiles([])
       // Praznimo <input type="file">; njegovu vrednost React ne kontrolise, pa to radimo preko ref-a.
       file_input.current.value = ''
@@ -107,7 +106,9 @@ function ProjectGallery({ project, onChanged }) {
         // 413 = PHP je odbio ceo zahtev kao prevelik (post_max_size), pre nego sto je stigao do Laravela.
         setUploadErrors([`Slike su zajedno prevelike; odjednom se može poslati najviše ${formatFileSize(MAX_TOTAL_BYTES)}.`])
       } else {
-        setUploadErrors(errors ? uploadErrorMessages(errors, files) : [err.message])
+        // Greske po fajlu (validacija) ostaju ispod polja; neocekivana greska ide u crvenu notifikaciju.
+        if (errors) setUploadErrors(uploadErrorMessages(errors, files))
+        else toast.error(`Otpremanje nije uspelo: ${err.message}`)
       }
     } finally {
       setUploading(false)
@@ -116,15 +117,15 @@ function ProjectGallery({ project, onChanged }) {
 
   async function handleDelete() {
     setDeleting(true)
-    setDeleteError(null)
 
     try {
       await apiRequest(`/projects/${project.id}/images/${image_to_delete.id}`, { method: 'DELETE' })
-      setMessage(`Slika "${image_to_delete.original_name}" je obrisana.`)
+      toast.success(`Slika "${image_to_delete.original_name}" je obrisana.`)
       setImageToDelete(null)
       onChanged()
     } catch (err) {
-      setDeleteError(err.message)
+      toast.error(`Brisanje slike nije uspelo: ${err.message}`)
+      setImageToDelete(null)
     } finally {
       setDeleting(false)
     }
@@ -133,8 +134,6 @@ function ProjectGallery({ project, onChanged }) {
   return (
     <section className="space-y-4">
       <h2 className="text-xl font-semibold text-gray-800">Slike ({project.images.length})</h2>
-
-      {message && <Alert type="success">{message}</Alert>}
 
       <form noValidate onSubmit={handleUpload} className="space-y-3 rounded-lg bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-center gap-3">
@@ -195,10 +194,7 @@ function ProjectGallery({ project, onChanged }) {
                 <Button
                   size="sm"
                   variant="danger"
-                  onClick={() => {
-                    setDeleteError(null)
-                    setImageToDelete(image)
-                  }}
+                  onClick={() => setImageToDelete(image)}
                 >
                   Obriši
                 </Button>
@@ -218,7 +214,6 @@ function ProjectGallery({ project, onChanged }) {
         open={image_to_delete !== null}
         title="Brisanje slike"
         loading={deleting}
-        error={delete_error}
         onCancel={() => setImageToDelete(null)}
         onConfirm={handleDelete}
         message={
