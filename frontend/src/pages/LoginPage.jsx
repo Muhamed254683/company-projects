@@ -14,7 +14,8 @@ function LoginPage() {
   // Kuda je korisnik krenuo pre nego sto ga je RequireAuth poslao ovde.
   const from = location.state?.from ?? '/companies'
 
-  const [values, setValues] = useState({ email: '', password: '' })
+  // Posle nove lozinke ResetPasswordPage salje i email, da ne mora ponovo da se kuca.
+  const [values, setValues] = useState({ email: location.state?.email ?? '', password: '' })
   const [errors, setErrors] = useState({})
   const [general_error, setGeneralError] = useState(null)
   const [sending, setSending] = useState(false)
@@ -87,6 +88,11 @@ function LoginPage() {
           onChange={handleChange}
           error={errors.password}
         />
+        <div className="-mt-2 text-right text-sm">
+          <Link to="/forgot-password" className="text-blue-700 hover:underline">
+            Zaboravljena lozinka?
+          </Link>
+        </div>
 
         <Button type="submit" disabled={sending} className="w-full">
           {sending ? 'Prijava...' : 'Prijavi se'}

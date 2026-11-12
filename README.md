@@ -95,6 +95,7 @@ npm run dev                  # aplikacija na http://localhost:5173
 
 **Prijava u React aplikaciju:** `admin@example.com` / `password` (pravi ga seeder), ili napravi svoj nalog
 na stranici **Registracija** (http://localhost:5173/register; link je i na stranici za prijavu).
+Zaboravljena lozinka: link na stranici za prijavu; lokalno se email ne salje, nego je na kraju `backend/storage/logs/laravel.log`.
 Svi korisnici iz seedera imaju lozinku `password`. Na bazi koja je napravljena ranije, bez admin naloga:
 `php artisan db:seed --class=AdminUserSeeder` (u `backend/`; dodaje samo taj nalog).
 Dashboard i javna stranica projekta (Blade) ne traze prijavu.
@@ -138,7 +139,7 @@ Ako menjas izgled Blade stranica (`backend/resources/views`), ponovo pokreni `np
 
 Backend testovi koriste **posebnu SQLite bazu u memoriji** (`phpunit.xml`), pa ne diraju MySQL bazu.
 Pokrivaju: obe Blade stranice, pravila za `slug`, brisanje slika sa diska (pri brisanju slike, projekta i kompanije),
-pretragu i filtere na listama, korpu za projekte (soft delete), redosled slika, prijavu i registraciju (token, odjava, 401, ogranicenje pokusaja)
+pretragu i filtere na listama, korpu za projekte (soft delete), redosled slika, prijavu, registraciju i zaboravljenu lozinku (token, odjava, 401, ogranicenje pokusaja)
 i `ProjectFactory` za veliki broj projekata.
 
 ### Bruno kolekcija
@@ -151,6 +152,7 @@ i `ProjectFactory` za veliki broj projekata.
    `Authorization: Bearer {{token}}` iz `collection.bru` vazi za sve zahteve. Pojedinacan zahtev: prvo pokreni `Login`.
    `00 Auth / Register` pravi novog korisnika (admin ga brise na kraju, u `06 Logout`). Registracija je ogranicena
    na 3 u minuti po IP-u: ako kolekciju pokreces vise puta zaredom, izmedju pokretanja sacekaj minut.
+   `00 Auth / Forgot password` i `Reset password - invalid token 422` pokazuju zaboravljenu lozinku bez stvarne promene lozinke.
 
 ---
 
@@ -162,6 +164,9 @@ i `ProjectFactory` za veliki broj projekata.
   Na listi korisnika sopstveni nalog nema dugme "Obriši".
 - **Registracija** (`/register`): svako moze da napravi nalog (ime, prezime, email, lozinka dva puta) i odmah je prijavljen.
   Nov korisnik je bez kompanije; kompanija se podesava kroz "Izmeni" na stranici Users.
+- **Zaboravljena lozinka** (link na prijavi, `/forgot-password`): unese se email i stize email sa linkom za novu lozinku
+  (`/reset-password?token=...&email=...`). Link vazi 60 minuta i samo jednom. Posle nove lozinke korisnik je odjavljen
+  sa svih uredjaja i vraca se na prijavu. Poruka je ista i kada nalog ne postoji (niko ne moze da proverava ko ima nalog).
 - Kompanije, projekti, korisnici: lista sa paginacijom, dodavanje i izmena (ista forma), brisanje uz potvrdu.
 - **Notifikacije:** posle svake uspesne akcije (cuvanje, brisanje, korpa, clanovi, slike) dole desno se pojavi kratka poruka;
   zelena nestaje posle 4 s, crvena (neocekivana greska, npr. server ne radi) posle 8 s; dok je mis iznad nje, ne nestaje.
@@ -188,6 +193,7 @@ i `ProjectFactory` za veliki broj projekata.
 | Resurs | Endpointi |
 |---|---|
 | Prijava | `POST /api/login` (email, password -> `{ token, user }`), `POST /api/register` (201, `{ token, user }`), `POST /api/logout`, `GET /api/me` |
+| Zaboravljena lozinka | `POST /api/forgot-password` (email -> salje link), `POST /api/reset-password` (token, email, password, password_confirmation) |
 | Kompanije | `GET/POST /api/companies`, `GET/PUT/DELETE /api/companies/{id}` |
 | Korisnici | `GET/POST /api/users`, `GET/PUT/DELETE /api/users/{id}` |
 | Projekti | `GET/POST /api/projects`, `GET/PUT/DELETE /api/projects/{id}` (DELETE = u korpu) |
@@ -196,11 +202,14 @@ i `ProjectFactory` za veliki broj projekata.
 | Slike projekta | `POST /api/projects/{id}/images`, `PUT /api/projects/{id}/images/order` (redosled), `DELETE /api/projects/{id}/images/{image_id}` |
 
 - Svaki zahtev treba da ima header `Accept: application/json`.
-- **Prijava (Laravel Sanctum, token):** svi endpointi osim `POST /api/login` i `POST /api/register` traze header
+- **Prijava (Laravel Sanctum, token):** svi endpointi osim `login`, `register`, `forgot-password` i `reset-password` traze header
   `Authorization: Bearer <token>` (inace 401). Token vazi 7 dana (`SANCTUM_EXPIRATION`); `logout` brise samo token te prijave.
   Najvise 5 pokusaja prijave u minuti za isti email i IP, i 3 registracije u minuti po IP-u (zatim 429).
   Korisnik ne moze da obrise sam sebe (403).
 - **Registracija:** `first_name`, `last_name`, `email` (jedinstven), `password` (najmanje 8 znakova) i `password_confirmation`.
+- **Zaboravljena lozinka:** `forgot-password` uvek vraca 200 sa istom porukom (i za nepostojeci email). Link u emailu vodi na
+  React (`FRONTEND_URL`). `reset-password` sa losim, isteklim ili vec iskoriscenim tokenom vraca 422; uspeh brise sve tokene
+  korisnika. Najvise 5 zahteva u minuti po IP-u (zbirno za obe rute), a novi link za isti nalog tek posle 60 sekundi.
 - Liste su paginirane: `?page=1&per_page=15` (najvise 100).
 - Pretraga i filteri (pogresna vrednost filtera vraca 422):
 
@@ -236,7 +245,7 @@ Lozinke i adrese su u `.env` fajlovima (nisu u Git-u); sabloni sa objasnjenjima 
 
 | Fajl | Bitno |
 |---|---|
-| `backend/.env` | `DB_*` (baza), `APP_URL` (adresa backenda, od nje se prave URL-ovi slika), `FRONTEND_URL` (CORS: ko sme da zove API iz browsera), `SANCTUM_EXPIRATION` (koliko minuta vazi token za prijavu; 10080 = 7 dana) |
+| `backend/.env` | `DB_*` (baza), `APP_URL` (adresa backenda, od nje se prave URL-ovi slika), `FRONTEND_URL` (CORS: ko sme da zove API iz browsera), `SANCTUM_EXPIRATION` (koliko minuta vazi token za prijavu; 10080 = 7 dana), `MAIL_*` (slanje emailova; `MAIL_MAILER=log` = emailovi se samo upisuju u `storage/logs/laravel.log`, za pravo slanje `MAIL_MAILER=smtp` i `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS` od mail servera) |
 | `frontend/.env` | `VITE_API_URL` (adresa API-ja). Upisuje se u kod pri build-u: posle promene treba novi build. |
 
 ---
@@ -248,6 +257,8 @@ Lozinke i adrese su u `.env` fajlovima (nisu u Git-u); sabloni sa objasnjenjima 
 | Prijava: "The email or password is incorrect." za `admin@example.com` | Admin nalog ne postoji u toj bazi: `php artisan db:seed --class=AdminUserSeeder` u `backend/`. |
 | Prijava: "Previše pokušaja prijave" (429) | 5 pogresnih pokusaja u minuti; sacekaj minut. |
 | Registracija: "Previše pokušaja registracije" (429) | Najvise 3 registracije u minuti sa iste IP adrese; sacekaj minut. |
+| Ne stize email za novu lozinku | Lokalno se emailovi ne salju (`MAIL_MAILER=log`): link je na kraju `backend/storage/logs/laravel.log`. Novi link za isti nalog moze tek posle 60 sekundi. |
+| Link za novu lozinku: "nije ispravan ili je istekao" | Link vazi 60 minuta i samo jednom, i vazi samo poslednji poslat; zatrazi novi. |
 | API ili Bruno vracaju 401 "Unauthenticated." | Zahtev nema vazeci token: prvo `POST /api/login` (u Brunu zahtev `Login`), pa `Authorization: Bearer <token>`. |
 | `SQLSTATE[HY000] [1045] Access denied` | Pogresan `DB_USERNAME` / `DB_PASSWORD` u `backend/.env`. Posle izmene: `php artisan config:clear`. |
 | `SQLSTATE[HY000] [1049] Unknown database` | Baza nije napravljena: korak 2.2. |
@@ -265,7 +276,8 @@ Lozinke i adrese su u `.env` fajlovima (nisu u Git-u); sabloni sa objasnjenjima 
 - **Prijava bez uloga + otvorena registracija:** svaki prijavljen korisnik moze sve, a registrovati se moze bilo ko.
   Znaci: svako ko otvori aplikaciju moze da napravi nalog i dobije pun pristup (brisanje firmi, projekata, korisnika).
   U redu za lokalni rad i demonstraciju; prava aplikacija bi imala uloge, odobravanje novih naloga ili pozivnice.
-- **Nema potvrde emaila ni "zaboravljena lozinka"** (za to bi trebalo slanje mejlova). Lozinku drugog korisnika
+- **Nema potvrde emaila:** pri registraciji se ne proverava da li je email pravi. Lokalno se emailovi (zaboravljena lozinka)
+  ne salju, nego upisuju u log; za pravo slanje treba podesiti `MAIL_*` u `backend/.env`. Lozinku drugog korisnika
   moze da promeni prijavljen korisnik kroz "Izmeni" na stranici Users.
 - **Token je u `localStorage`** browsera: jednostavno, ali zlonamerni JavaScript (XSS) bi mogao da ga procita.
   Aplikacija svuda escapuje tekst; sigurnija varijanta je Sanctum SPA prijava preko kolacica.

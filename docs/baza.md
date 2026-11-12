@@ -2,7 +2,8 @@
 
 MySQL baza `company_projects`, 5 tabela aplikacije + Laravelove sistemske tabele
 (`sessions`, `cache`, `jobs`, `migrations`...) i Sanctum tabela `personal_access_tokens`
-(tokeni za prijavu: u bazi se cuva samo hes tokena, korisnik, vreme poslednje upotrebe). Sve tabele prave migracije u
+(tokeni za prijavu: u bazi se cuva samo hes tokena, korisnik, vreme poslednje upotrebe) i `password_reset_tokens`
+(zaboravljena lozinka: email, hes jednokratnog tokena iz linka i vreme pravljenja; red se brise kada se link iskoristi). Sve tabele prave migracije u
 `backend/database/migrations/`, a test podatke seederi u `backend/database/seeders/`.
 
 ## Dijagram
