@@ -1,0 +1,52 @@
+meta {
+  name: Register
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/register
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "first_name": "Bruno",
+    "last_name": "Registracija",
+    "email": "bruno.registracija.{{random_registration}}@example.com",
+    "password": "tajna1234",
+    "password_confirmation": "tajna1234"
+  }
+}
+
+script:pre-request {
+  // Nasumican email, da drugo pokretanje ne padne na "already taken".
+  bru.setVar("random_registration", String(Date.now()));
+}
+
+script:post-response {
+  // NE diramo "token" (admin): pamtimo samo id novog korisnika, da ga admin obrise na kraju ("06 Logout").
+  bru.setVar("registered_user_id", res.body.user.id);
+}
+
+docs {
+  Otvorena registracija: vraca { token, user } (201), pa je novi korisnik odmah prijavljen.
+  Novi korisnik je bez kompanije. Najvise 3 registracije u minuti sa iste IP adrese (zatim 429):
+  ako kolekciju pokreces vise puta zaredom, sacekaj minut.
+}
+
+assert {
+  res.status: eq 201
+  res.body.user.company_id: isNull
+}
+
+tests {
+  test("vraca token novog korisnika", function () {
+    expect(res.body.token).to.be.a("string").and.not.be.empty;
+  });
+}

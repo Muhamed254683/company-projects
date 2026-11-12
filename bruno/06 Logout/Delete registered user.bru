@@ -1,0 +1,23 @@
+meta {
+  name: Delete registered user
+  type: http
+  seq: 1
+}
+
+delete {
+  url: {{base_url}}/users/{{registered_user_id}}
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Ciscenje: admin brise korisnika iz "00 Auth / Register" (brisu se i njegovi tokeni).
+}
+
+assert {
+  res.status: eq 204
+}

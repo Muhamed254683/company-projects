@@ -10,8 +10,9 @@ use Illuminate\Support\Facades\Route;
 
 // Sve rute ovde automatski dobijaju prefiks /api (npr. /api/companies).
 
-// Prijava je jedina ruta bez tokena. throttle:login = najvise 5 pokusaja u minuti (AppServiceProvider).
+// Prijava i registracija su jedine rute bez tokena (ogranicenja su u AppServiceProvider).
 Route::post('login', [AuthController::class, 'login'])->middleware('throttle:login');
+Route::post('register', [AuthController::class, 'register'])->middleware('throttle:register');
 
 // Sve ostalo trazi prijavu: zahtev mora da ima "Authorization: Bearer <token>", inace 401.
 Route::middleware('auth:sanctum')->group(function () {

@@ -64,6 +64,16 @@ function AuthProvider({ children }) {
     return response.user
   }, [])
 
+  // Registracija: API vraca { token, user } kao i prijava, pa je korisnik odmah prijavljen.
+  const register = useCallback(async (data) => {
+    // Baca ApiError (422 greske validacije, 429 previse pokusaja); RegisterPage prikazuje poruke.
+    const response = await apiRequest('/register', { method: 'POST', body: data })
+    setToken(response.token)
+    setUser(response.user)
+    setStatus('authenticated')
+    return response.user
+  }, [])
+
   const logout = useCallback(async () => {
     try {
       // Brise token i na serveru (ne samo u browseru).
@@ -78,7 +88,7 @@ function AuthProvider({ children }) {
     toast.success('Odjavljen si.')
   }, [toast])
 
-  const value = useMemo(() => ({ user, status, login, logout }), [user, status, login, logout])
+  const value = useMemo(() => ({ user, status, login, register, logout }), [user, status, login, register, logout])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

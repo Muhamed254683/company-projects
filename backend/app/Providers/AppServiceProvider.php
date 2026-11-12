@@ -27,5 +27,10 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('login', function (Request $request) {
             return Limit::perMinute(5)->by(mb_strtolower((string) $request->input('email')).'|'.$request->ip());
         });
+
+        // Registracija: najvise 3 pokusaja u minuti sa iste IP adrese (zastita od botova koji prave naloge).
+        RateLimiter::for('register', function (Request $request) {
+            return Limit::perMinute(3)->by($request->ip());
+        });
     }
 }

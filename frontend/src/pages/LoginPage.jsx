@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { getValidationErrors } from '../api/client.js'
 import { useAuth } from '../auth/authContext.js'
+import AuthCard from '../components/AuthCard.jsx'
 import Alert from '../components/ui/Alert.jsx'
 import Button from '../components/ui/Button.jsx'
 import Input from '../components/ui/Input.jsx'
@@ -52,49 +53,53 @@ function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
-      <div className="w-full max-w-sm">
-        <h1 className="mb-6 text-center text-2xl font-bold text-blue-700">Company Projects</h1>
+    <AuthCard
+      title="Prijava"
+      footer={
+        <>
+          Nemaš nalog?{' '}
+          <Link to="/register" className="font-medium text-blue-700 hover:underline">
+            Registruj se
+          </Link>
+        </>
+      }
+    >
+      <form noValidate onSubmit={handleSubmit} className="space-y-4">
+        {general_error && <Alert>{general_error}</Alert>}
 
-        <form noValidate onSubmit={handleSubmit} className="space-y-4 rounded-lg bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-800">Prijava</h2>
+        <Input
+          label="Email"
+          name="email"
+          type="email"
+          autoComplete="username"
+          required
+          value={values.email}
+          onChange={handleChange}
+          error={errors.email}
+        />
+        <Input
+          label="Lozinka"
+          name="password"
+          type="password"
+          autoComplete="current-password"
+          required
+          value={values.password}
+          onChange={handleChange}
+          error={errors.password}
+        />
 
-          {general_error && <Alert>{general_error}</Alert>}
+        <Button type="submit" disabled={sending} className="w-full">
+          {sending ? 'Prijava...' : 'Prijavi se'}
+        </Button>
 
-          <Input
-            label="Email"
-            name="email"
-            type="email"
-            autoComplete="username"
-            required
-            value={values.email}
-            onChange={handleChange}
-            error={errors.email}
-          />
-          <Input
-            label="Lozinka"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            value={values.password}
-            onChange={handleChange}
-            error={errors.password}
-          />
-
-          <Button type="submit" disabled={sending} className="w-full">
-            {sending ? 'Prijava...' : 'Prijavi se'}
-          </Button>
-
-          {/* Samo u razvoju (npm run dev): podsetnik na test nalog iz seedera. U build-u ovoga nema. */}
-          {import.meta.env.DEV && (
-            <p className="text-center text-xs text-gray-500">
-              Test nalog: <strong>admin@example.com</strong> / <strong>password</strong>
-            </p>
-          )}
-        </form>
-      </div>
-    </div>
+        {/* Samo u razvoju (npm run dev): podsetnik na test nalog iz seedera. U build-u ovoga nema. */}
+        {import.meta.env.DEV && (
+          <p className="text-center text-xs text-gray-500">
+            Test nalog: <strong>admin@example.com</strong> / <strong>password</strong>
+          </p>
+        )}
+      </form>
+    </AuthCard>
   )
 }
 

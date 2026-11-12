@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -36,6 +37,29 @@ class AuthController extends Controller
             'token' => $token,
             'user' => UserResource::make($user->load('company')),
         ]);
+    }
+
+    /**
+     * POST /api/register  -> { token, user }  (201)
+     * Otvorena registracija: svako moze da napravi nalog i odmah je prijavljen.
+     * Kompanija se ne bira ovde (lista kompanija je samo za prijavljene); podesava se kasnije kroz "Izmeni".
+     */
+    public function register(RegisterRequest $request): JsonResponse
+    {
+        $user = User::create([
+            'first_name' => $request->input('first_name'),
+            'last_name' => $request->input('last_name'),
+            'email' => $request->input('email'),
+            // Model sam hesira lozinku ('password' => 'hashed' u casts()).
+            'password' => $request->input('password'),
+        ]);
+
+        $token = $user->createToken('react')->plainTextToken;
+
+        return response()->json([
+            'token' => $token,
+            'user' => UserResource::make($user->load('company')),
+        ], 201);
     }
 
     /**

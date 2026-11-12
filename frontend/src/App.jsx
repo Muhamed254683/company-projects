@@ -5,6 +5,7 @@ import ResetOnUrlChange from './components/ResetOnUrlChange.jsx'
 import CompanyFormPage from './pages/companies/CompanyFormPage.jsx'
 import CompanyListPage from './pages/companies/CompanyListPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
+import RegisterPage from './pages/RegisterPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 import ProjectDetailPage from './pages/projects/ProjectDetailPage.jsx'
 import ProjectFormPage from './pages/projects/ProjectFormPage.jsx'
@@ -21,8 +22,9 @@ function form(page) {
 function App() {
   return (
     <Routes>
-      {/* Jedina stranica bez prijave. */}
+      {/* Jedine stranice bez prijave. */}
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
 
       {/* RequireAuth: sve unutra vide samo prijavljeni korisnici (ostali idu na /login). */}
       <Route element={<RequireAuth />}>
