@@ -1,0 +1,36 @@
+meta {
+  name: List projects - search
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{base_url}}/projects?search=Bruno test projekat {{random_suffix}}&status=on_hold
+  body: none
+  auth: none
+}
+
+params:query {
+  search: Bruno test projekat {{random_suffix}}
+  status: on_hold
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Pretraga po nazivu i opisu, zajedno sa filterima status i company_id.
+  Trazi projekat iz "Create project" (status je promenjen u on_hold u prethodnom zahtevu).
+}
+
+assert {
+  res.status: eq 200
+  res.body.meta.total: eq 1
+}
+
+tests {
+  test("nadjen je bas test projekat", function () {
+    expect(res.body.data[0].id).to.equal(Number(bru.getVar("project_id")));
+  });
+}

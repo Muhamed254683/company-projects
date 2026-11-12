@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ListProjectsRequest;
 use App\Http\Requests\ProjectRequest;
 use App\Http\Resources\ProjectResource;
 use App\Models\Project;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -14,14 +14,15 @@ use Illuminate\Support\Facades\DB;
 class ProjectController extends Controller
 {
     /**
-     * GET /api/projects?page=1&per_page=15&company_id=2&status=active
+     * GET /api/projects?page=1&per_page=15&search=orion&company_id=2&status=active
      */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(ListProjectsRequest $request): AnonymousResourceCollection
     {
         $per_page = min(max($request->integer('per_page', 15), 1), 100);
 
         $projects = Project::with('company')
             ->withCount(['members', 'images'])
+            ->search($request->input('search'), ['name', 'description'])
             ->when($request->filled('company_id'), fn ($query) => $query->where('company_id', $request->integer('company_id')))
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')))
             ->orderBy('name')

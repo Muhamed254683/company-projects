@@ -3,26 +3,29 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ListUsersRequest;
 use App\Http\Requests\UserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 
 class UserController extends Controller
 {
     /**
-     * GET /api/users?page=1&per_page=15&company_id=3
+     * GET /api/users?page=1&per_page=15&search=milin&company_id=3   (company_id=none -> bez kompanije)
      */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(ListUsersRequest $request): AnonymousResourceCollection
     {
         $per_page = min(max($request->integer('per_page', 15), 1), 100);
+        $company_id = $request->input('company_id');
 
         $users = User::with('company')
             ->withCount('projects')
-            // Opcioni filter: samo korisnici jedne kompanije.
-            ->when($request->filled('company_id'), fn ($query) => $query->where('company_id', $request->integer('company_id')))
+            ->search($request->input('search'), ['first_name', 'last_name', 'email', 'job_title'])
+            // Opcioni filter: korisnici jedne kompanije, ili "none" = frilenseri (bez kompanije).
+            ->when($company_id === 'none', fn ($query) => $query->whereNull('company_id'))
+            ->when(ctype_digit((string) $company_id), fn ($query) => $query->where('company_id', (int) $company_id))
             ->orderBy('last_name')
             ->orderBy('first_name')
             ->paginate($per_page)

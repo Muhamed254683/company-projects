@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CompanyRequest;
+use App\Http\Requests\ListCompaniesRequest;
 use App\Http\Resources\CompanyResource;
 use App\Models\Company;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -14,16 +14,20 @@ use Illuminate\Support\Facades\DB;
 class CompanyController extends Controller
 {
     /**
-     * GET /api/companies?page=1&per_page=15
+     * GET /api/companies?page=1&per_page=15&search=cacak&city=Beograd
      */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(ListCompaniesRequest $request): AnonymousResourceCollection
     {
         // per_page je ogranicen na 1-100, da niko ne moze da trazi milion redova odjednom.
         $per_page = min(max($request->integer('per_page', 15), 1), 100);
 
         $companies = Company::withCount(['users', 'projects'])
+            ->search($request->input('search'), ['name', 'tax_number', 'city', 'email'])
+            ->when($request->filled('city'), fn ($query) => $query->where('city', $request->input('city')))
             ->orderBy('name')
-            ->paginate($per_page);
+            ->paginate($per_page)
+            // Da linkovi za sledecu stranu zadrze filtere (&search=...&city=...).
+            ->withQueryString();
 
         return CompanyResource::collection($companies);
     }

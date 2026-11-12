@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 import { apiRequest } from '../api/client.js'
 
 // Sve kompanije kao opcije za <Select>: [{ value: 1, label: 'Firma A' }, ...].
-// API vraca najvise 100 po strani; za ovu aplikaciju je to dovoljno.
+// companies: cele kompanije (npr. za spisak gradova u filteru).
+// API vraca najvise 100 po strani; za ovu aplikaciju je to dovoljno (vidi README, "Poznata ogranicenja").
 export function useCompanyOptions() {
-  const [options, setOptions] = useState([])
+  const [companies, setCompanies] = useState([])
   const [error, setError] = useState(null)
 
   useEffect(() => {
@@ -12,7 +13,7 @@ export function useCompanyOptions() {
 
     apiRequest('/companies?per_page=100')
       .then((response) => {
-        if (!ignore) setOptions(response.data.map((company) => ({ value: company.id, label: company.name })))
+        if (!ignore) setCompanies(response.data)
       })
       .catch((err) => {
         if (!ignore) setError(err.message)
@@ -23,5 +24,7 @@ export function useCompanyOptions() {
     }
   }, [])
 
-  return { options, error }
+  const options = companies.map((company) => ({ value: company.id, label: company.name }))
+
+  return { options, companies, error }
 }

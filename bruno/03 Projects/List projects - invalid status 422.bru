@@ -1,0 +1,29 @@
+meta {
+  name: List projects - invalid status 422
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{base_url}}/projects?status=gotovo
+  body: none
+  auth: none
+}
+
+params:query {
+  status: gotovo
+}
+
+headers {
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 422
+}
+
+tests {
+  test("greska za status", function () {
+    expect(res.body.errors).to.have.property("status");
+  });
+}

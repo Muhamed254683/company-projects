@@ -6,12 +6,24 @@ import Button from '../../components/ui/Button.jsx'
 import ConfirmDialog from '../../components/ui/ConfirmDialog.jsx'
 import PageHeader from '../../components/ui/PageHeader.jsx'
 import Pagination from '../../components/ui/Pagination.jsx'
+import FilterBar from '../../components/ui/FilterBar.jsx'
+import SearchInput from '../../components/ui/SearchInput.jsx'
+import Select from '../../components/ui/Select.jsx'
 import Table from '../../components/ui/Table.jsx'
+import { useCompanyOptions } from '../../hooks/useCompanyOptions.js'
+import { useListFilters } from '../../hooks/useListFilters.js'
 import { usePaginatedList } from '../../hooks/usePaginatedList.js'
+
+const FILTER_KEYS = ['search', 'company_id']
 
 function UserListPage() {
   const location = useLocation()
-  const { rows, meta, loading, error, setPage, reload } = usePaginatedList('/users')
+  const { filters, has_filters, setFilter, resetFilters } = useListFilters(FILTER_KEYS)
+  const { rows, meta, loading, error, setPage, reload } = usePaginatedList('/users', { filter_keys: FILTER_KEYS })
+
+  // "none" = korisnici bez kompanije (API: /users?company_id=none).
+  const { options: company_options } = useCompanyOptions()
+  const company_filter_options = [{ value: 'none', label: '— bez kompanije (frilenseri) —' }, ...company_options]
 
   const [message, setMessage] = useState(location.state?.message ?? null)
   const [user_to_delete, setUserToDelete] = useState(null)
@@ -81,13 +93,33 @@ function UserListPage() {
         </div>
       )}
 
+      <FilterBar has_filters={has_filters} onReset={resetFilters}>
+        <SearchInput
+          value={filters.search}
+          onChange={(value) => setFilter('search', value, { replace: true })}
+          placeholder="Ime, prezime, email ili pozicija"
+        />
+        <Select
+          label="Kompanija"
+          name="company_id"
+          placeholder="Sve kompanije"
+          options={company_filter_options}
+          value={filters.company_id}
+          onChange={(event) => setFilter('company_id', event.target.value)}
+        />
+      </FilterBar>
+
       {error && <Alert>Greška pri učitavanju: {error}</Alert>}
 
       {!error && loading && !meta && <p className="text-gray-500">Učitavanje...</p>}
 
       {!error && meta && (
         <div className={loading ? 'opacity-50' : ''}>
-          <Table columns={columns} rows={rows} emptyMessage="Još nema korisnika." />
+          <Table
+            columns={columns}
+            rows={rows}
+            emptyMessage={has_filters ? 'Nema rezultata za zadate filtere.' : 'Još nema korisnika.'}
+          />
           <Pagination meta={meta} onPageChange={setPage} />
         </div>
       )}

@@ -1,0 +1,29 @@
+meta {
+  name: List users - invalid company_id 422
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{base_url}}/users?company_id=abc
+  body: none
+  auth: none
+}
+
+params:query {
+  company_id: abc
+}
+
+headers {
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 422
+}
+
+tests {
+  test("greska za company_id", function () {
+    expect(res.body.errors).to.have.property("company_id");
+  });
+}

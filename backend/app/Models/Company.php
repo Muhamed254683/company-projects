@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Searchable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable(['name', 'tax_number', 'email', 'phone', 'website', 'address', 'city', 'description'])]
 class Company extends Model
 {
-    use HasFactory;
+    use HasFactory, Searchable;
 
     protected static function booted(): void
     {

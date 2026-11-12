@@ -6,12 +6,26 @@ import Button from '../../components/ui/Button.jsx'
 import ConfirmDialog from '../../components/ui/ConfirmDialog.jsx'
 import PageHeader from '../../components/ui/PageHeader.jsx'
 import Pagination from '../../components/ui/Pagination.jsx'
+import FilterBar from '../../components/ui/FilterBar.jsx'
+import SearchInput from '../../components/ui/SearchInput.jsx'
+import Select from '../../components/ui/Select.jsx'
 import Table from '../../components/ui/Table.jsx'
+import { useCompanyOptions } from '../../hooks/useCompanyOptions.js'
+import { useListFilters } from '../../hooks/useListFilters.js'
 import { usePaginatedList } from '../../hooks/usePaginatedList.js'
+
+const FILTER_KEYS = ['search', 'city']
 
 function CompanyListPage() {
   const location = useLocation()
-  const { rows, meta, loading, error, setPage, reload } = usePaginatedList('/companies')
+  const { filters, has_filters, setFilter, resetFilters } = useListFilters(FILTER_KEYS)
+  const { rows, meta, loading, error, setPage, reload } = usePaginatedList('/companies', { filter_keys: FILTER_KEYS })
+
+  // Gradovi za filter: svi razliciti gradovi postojecih kompanija, po abecedi.
+  const { companies } = useCompanyOptions()
+  const city_options = [...new Set(companies.map((company) => company.city).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, 'sr'))
+    .map((city) => ({ value: city, label: city }))
 
   // Poruka koju je forma poslala posle cuvanja (navigate(..., { state: { message } })).
   const [message, setMessage] = useState(location.state?.message ?? null)
@@ -76,6 +90,22 @@ function CompanyListPage() {
         </div>
       )}
 
+      <FilterBar has_filters={has_filters} onReset={resetFilters}>
+        <SearchInput
+          value={filters.search}
+          onChange={(value) => setFilter('search', value, { replace: true })}
+          placeholder="Naziv, PIB, grad ili email"
+        />
+        <Select
+          label="Grad"
+          name="city"
+          placeholder="Svi gradovi"
+          options={city_options}
+          value={filters.city}
+          onChange={(event) => setFilter('city', event.target.value)}
+        />
+      </FilterBar>
+
       {error && <Alert>Greška pri učitavanju: {error}</Alert>}
 
       {!error && loading && !meta && <p className="text-gray-500">Učitavanje...</p>}
@@ -83,7 +113,11 @@ function CompanyListPage() {
       {!error && meta && (
         // Dok se ucitava druga strana, stara tabela ostaje vidljiva, samo bleda.
         <div className={loading ? 'opacity-50' : ''}>
-          <Table columns={columns} rows={rows} emptyMessage="Još nema kompanija." />
+          <Table
+            columns={columns}
+            rows={rows}
+            emptyMessage={has_filters ? 'Nema rezultata za zadate filtere.' : 'Još nema kompanija.'}
+          />
           <Pagination meta={meta} onPageChange={setPage} />
         </div>
       )}

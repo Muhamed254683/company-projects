@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ProjectStatus;
+use App\Models\Concerns\Searchable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,7 +15,7 @@ use Illuminate\Support\Str;
 #[Fillable(['company_id', 'name', 'description', 'status', 'start_date', 'end_date', 'budget'])]
 class Project extends Model
 {
-    use HasFactory;
+    use HasFactory, Searchable;
 
     protected $attributes = [
         'status' => 'planned',

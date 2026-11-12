@@ -131,7 +131,8 @@ Ako menjas izgled Blade stranica (`backend/resources/views`), ponovo pokreni `np
 | API kolekcija | Bruno, vidi ispod | `bruno/` |
 
 Backend testovi koriste **posebnu SQLite bazu u memoriji** (`phpunit.xml`), pa ne diraju MySQL bazu.
-Pokrivaju: obe Blade stranice, pravila za `slug` i brisanje slika sa diska (pri brisanju slike, projekta i kompanije).
+Pokrivaju: obe Blade stranice, pravila za `slug`, brisanje slika sa diska (pri brisanju slike, projekta i kompanije),
+pretragu i filtere na listama i `ProjectFactory` za veliki broj projekata.
 
 ### Bruno kolekcija
 
@@ -146,6 +147,9 @@ Pokrivaju: obe Blade stranice, pravila za `slug` i brisanje slika sa diska (pri 
 
 **React (http://localhost:5173)**
 - Kompanije, projekti, korisnici: lista sa paginacijom, dodavanje i izmena (ista forma), brisanje uz potvrdu.
+- Pretraga i filteri iznad svake liste (kompanije: grad; korisnici: kompanija ili "bez kompanije"; projekti: kompanija i status).
+  Pretraga krece 300 ms posle poslednjeg slova, ne razlikuje mala/velika slova ni kvacice ("bondzulic" nalazi "Bondžulić",
+  "djurasin" nalazi "Đurašin"), a filteri su u adresi stranice, pa link sa filterima moze da se posalje nekome.
 - Greske validacije iz Laravela prikazuju se ispod odgovarajucih polja.
 - Detalji projekta: clanovi sa ulogama (dodavanje i uklanjanje); clanovi iz druge firme i frilenseri su oznaceni zuto.
 - Galerija: upload vise slika odjednom (jpg/png/webp, do 2 MB po slici, 7,5 MB ukupno, 10 slika), uvecanje, brisanje (i sa diska).
@@ -166,7 +170,16 @@ Pokrivaju: obe Blade stranice, pravila za `slug` i brisanje slika sa diska (pri 
 | Slike projekta | `POST /api/projects/{id}/images`, `DELETE /api/projects/{id}/images/{image_id}` |
 
 - Svaki zahtev treba da ima header `Accept: application/json`.
-- Liste su paginirane: `?page=1&per_page=15` (najvise 100). Filteri: `/api/users?company_id=`, `/api/projects?company_id=&status=`.
+- Liste su paginirane: `?page=1&per_page=15` (najvise 100).
+- Pretraga i filteri (pogresna vrednost filtera vraca 422):
+
+  | Lista | `search` trazi u | Filteri |
+  |---|---|---|
+  | `/api/companies` | naziv, PIB, grad, email | `city=Beograd` |
+  | `/api/users` | ime, prezime, email, pozicija | `company_id=3`, `company_id=none` (bez kompanije) |
+  | `/api/projects` | naziv, opis | `company_id=2`, `status=planned/active/on_hold/completed` |
+
+  Vise reci znaci da svaka mora da se nadje: `?search=milin bolic`.
 - Slike: `multipart/form-data`, polje `images[]`, jpg/png/webp, najvise 2 MB po slici i 10 po zahtevu;
   ceo zahtev najvise 8 MB (PHP: `upload_max_filesize = 2M`, `post_max_size = 8M` u `php.ini`).
 - Izmena sa fajlovima (`multipart/form-data`) ide kao `POST` sa poljem `_method=PUT`,

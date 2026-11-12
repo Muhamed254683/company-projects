@@ -1,0 +1,35 @@
+meta {
+  name: List users - without company
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{base_url}}/users?company_id=none&per_page=100
+  body: none
+  auth: none
+}
+
+params:query {
+  company_id: none
+  per_page: 100
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  company_id=none vraca korisnike bez kompanije (frilensere).
+  Pretraga: ?search=milin bolic (svaka rec mora da se nadje u imenu, prezimenu, emailu ili poziciji).
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("svi korisnici su bez kompanije", function () {
+    res.body.data.forEach((user) => expect(user.company_id).to.equal(null));
+  });
+}
