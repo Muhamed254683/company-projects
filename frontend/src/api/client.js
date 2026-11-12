@@ -1,5 +1,10 @@
+import { clearToken, getToken } from './token.js'
+
 // Svi pozivi API-ja idu preko ove funkcije, pa je adresa API-ja na jednom mestu (.env).
 const API_URL = import.meta.env.VITE_API_URL
+
+// Ime dogadjaja koji javlja da prijava vise ne vazi (API je vratio 401); slusa ga AuthProvider.
+export const UNAUTHORIZED_EVENT = 'auth:unauthorized'
 
 if (!API_URL) {
   throw new Error('VITE_API_URL nije podesen. Napravi frontend/.env po uzoru na .env.example.')
@@ -36,6 +41,12 @@ export async function apiRequest(path, { method = 'GET', body } = {}) {
   const headers = { Accept: 'application/json' }
   const options = { method, headers }
 
+  // Prijavljen korisnik: token ide uz svaki zahtev (Laravel Sanctum).
+  const token = getToken()
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+
   if (body instanceof FormData) {
     // Fajlovi: browser sam postavlja Content-Type sa "boundary" delom, zato ga ne diramo.
     options.body = body
@@ -56,6 +67,13 @@ export async function apiRequest(path, { method = 'GET', body } = {}) {
   const data = response.status === 204 ? null : await response.json()
 
   if (!response.ok) {
+    // 401 (osim same prijave): token je istekao ili obrisan. Brisemo ga i javljamo aplikaciji,
+    // koja tada vraca korisnika na stranicu za prijavu.
+    if (response.status === 401 && path !== '/login') {
+      clearToken()
+      window.dispatchEvent(new Event(UNAUTHORIZED_EVENT))
+    }
+
     throw new ApiError(response.status, data)
   }
 

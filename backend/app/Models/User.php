@@ -13,13 +13,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 #[Fillable(['company_id', 'first_name', 'last_name', 'email', 'phone', 'job_title', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, Searchable;
+    // HasApiTokens (Sanctum): korisnik moze da dobije token pri prijavi ($user->createToken(...)).
+    use HasApiTokens, HasFactory, Notifiable, Searchable;
 
     /**
      * Get the attributes that should be cast.

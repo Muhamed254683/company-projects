@@ -1,10 +1,18 @@
+headers {
+  Authorization: Bearer {{token}}
+}
+
 docs {
   # Company Projects API
 
   Pre pokretanja: u folderu `backend` mora da radi `php artisan serve`.
   U Brunu izaberi okruzenje **Local** (gore desno).
 
+  API trazi prijavu: prvi zahtev ("00 Auth / Login") se prijavljuje kao admin@example.com / password
+  i cuva token u promenljivu `token`; header `Authorization: Bearer {{token}}` iznad vazi za SVE zahteve.
+  Ako pokreces pojedinacan zahtev, prvo pokreni "Login".
+
   Zahtevi su povezani promenljivama (`company_id`, `user_id`, `project_id`...),
   zato ih pokreci **redom**: ceo folder ili celu kolekciju (Run).
-  Kolekcija na kraju brise sve sto je napravila.
+  Kolekcija na kraju brise sve sto je napravila i odjavljuje se ("06 Logout").
 }

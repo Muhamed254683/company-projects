@@ -1,0 +1,43 @@
+meta {
+  name: Login
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/login
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "email": "admin@example.com",
+    "password": "password"
+  }
+}
+
+script:post-response {
+  // Token koristi header "Authorization: Bearer {{token}}" iz collection.bru za sve ostale zahteve.
+  bru.setVar("token", res.body.token);
+}
+
+docs {
+  Test nalog pravi seeder (AdminUserSeeder): admin@example.com / password.
+  Odgovor: { token, user }. Token vazi 7 dana (SANCTUM_EXPIRATION u backend/.env).
+}
+
+assert {
+  res.status: eq 200
+  res.body.user.email: eq admin@example.com
+}
+
+tests {
+  test("vraca token", function () {
+    expect(res.body.token).to.be.a("string").and.not.be.empty;
+  });
+}

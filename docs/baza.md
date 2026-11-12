@@ -1,7 +1,8 @@
 # Baza podataka
 
 MySQL baza `company_projects`, 5 tabela aplikacije + Laravelove sistemske tabele
-(`sessions`, `cache`, `jobs`, `migrations`...). Sve tabele prave migracije u
+(`sessions`, `cache`, `jobs`, `migrations`...) i Sanctum tabela `personal_access_tokens`
+(tokeni za prijavu: u bazi se cuva samo hes tokena, korisnik, vreme poslednje upotrebe). Sve tabele prave migracije u
 `backend/database/migrations/`, a test podatke seederi u `backend/database/seeders/`.
 
 ## Dijagram
@@ -203,4 +204,5 @@ php artisan migrate:fresh --seed    # sve iz pocetka (BRISE sve podatke; samo lo
 Seeder pravi: 5 kompanija, 30 zaposlenih (6 po firmi) + 2 frilensera, 15 projekata (3 po firmi)
 sa realnim statusima i datumima, i oko 85 clanstava: na svakom projektu menadzer i tim iz firme
 + 1-2 clana **iz drugih firmi ili frilensera**. Imena, gradovi i adrese su na srpskom (`APP_FAKER_LOCALE=sr_Latn_RS`).
-Na kraju jedan nasumicni projekat ide u korpu, da korpa u aplikaciji ne bude prazna (14 aktivnih + 1 u korpi).
+Na kraju jedan nasumicni projekat ide u korpu, da korpa u aplikaciji ne bude prazna (14 aktivnih + 1 u korpi),
+i pravi se nalog za prijavu `admin@example.com` / `password` (`AdminUserSeeder`; svi korisnici iz seedera imaju lozinku `password`).

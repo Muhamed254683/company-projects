@@ -1,0 +1,23 @@
+meta {
+  name: Me after logout - 401
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/me
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Posle odjave isti token vise ne vazi.
+}
+
+assert {
+  res.status: eq 401
+}

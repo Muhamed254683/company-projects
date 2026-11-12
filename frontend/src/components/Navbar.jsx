@@ -1,5 +1,6 @@
 import { Link, NavLink } from 'react-router-dom'
 import { BACKEND_URL } from '../api/client.js'
+import { useAuth } from '../auth/authContext.js'
 
 const links = [
   { to: '/companies', label: 'Companies' },
@@ -17,6 +18,8 @@ function navLinkClass({ isActive }) {
 }
 
 function Navbar() {
+  const { user, logout } = useAuth()
+
   return (
     <header className="bg-blue-700 shadow">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
@@ -38,6 +41,15 @@ function Navbar() {
             <a href={BACKEND_URL} className={navLinkClass({ isActive: false })}>
               Dashboard ↗
             </a>
+          </li>
+          {/* Prijavljeni korisnik i odjava. */}
+          <li className="ml-2 flex items-center gap-2 border-l border-blue-500 pl-4">
+            <span className="text-sm text-blue-100" data-current-user>
+              {user?.full_name}
+            </span>
+            <button type="button" onClick={logout} className={navLinkClass({ isActive: false })}>
+              Odjavi se
+            </button>
           </li>
         </ul>
       </nav>

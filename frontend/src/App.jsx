@@ -1,8 +1,10 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
+import RequireAuth from './auth/RequireAuth.jsx'
 import Layout from './components/Layout.jsx'
 import ResetOnUrlChange from './components/ResetOnUrlChange.jsx'
 import CompanyFormPage from './pages/companies/CompanyFormPage.jsx'
 import CompanyListPage from './pages/companies/CompanyListPage.jsx'
+import LoginPage from './pages/LoginPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 import ProjectDetailPage from './pages/projects/ProjectDetailPage.jsx'
 import ProjectFormPage from './pages/projects/ProjectFormPage.jsx'
@@ -19,6 +21,11 @@ function form(page) {
 function App() {
   return (
     <Routes>
+      {/* Jedina stranica bez prijave. */}
+      <Route path="/login" element={<LoginPage />} />
+
+      {/* RequireAuth: sve unutra vide samo prijavljeni korisnici (ostali idu na /login). */}
+      <Route element={<RequireAuth />}>
       {/* Sve stranice su "unutar" Layout-a, pa svaka ima isti okvir (i navbar). */}
       <Route element={<Layout />}>
         <Route path="/" element={<Navigate to="/companies" replace />} />
@@ -38,6 +45,7 @@ function App() {
 
         {/* "*" hvata svaki URL koji nije gore naveden. */}
         <Route path="*" element={<NotFoundPage />} />
+      </Route>
       </Route>
     </Routes>
   )

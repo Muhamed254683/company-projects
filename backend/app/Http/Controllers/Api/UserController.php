@@ -7,6 +7,7 @@ use App\Http\Requests\ListUsersRequest;
 use App\Http\Requests\UserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 
@@ -73,9 +74,13 @@ class UserController extends Controller
     /**
      * DELETE /api/users/{user}
      */
-    public function destroy(User $user): Response
+    public function destroy(Request $request, User $user): Response
     {
-        // Clanstva u project_user se brisu sama (cascadeOnDelete u migraciji).
+        // Prijavljeni korisnik ne moze da obrise sam sebe (ostao bi prijavljen sa nepostojecim nalogom).
+        abort_if($request->user()->id === $user->id, 403, 'You cannot delete your own account.');
+
+        // Clanstva u project_user i tokeni za prijavu brisu se sami (cascade / Sanctum).
+        $user->tokens()->delete();
         $user->delete();
 
         return response()->noContent();

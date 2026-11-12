@@ -1,0 +1,23 @@
+meta {
+  name: Logout
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/logout
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Brise token iz "Login" (samo njega; druge prijave istog korisnika ostaju).
+}
+
+assert {
+  res.status: eq 204
+}

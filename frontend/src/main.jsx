@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
+import AuthProvider from './auth/AuthProvider.jsx'
 import ToastProvider from './components/toast/ToastProvider.jsx'
 
 createRoot(document.getElementById('root')).render(
@@ -11,7 +12,10 @@ createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       {/* ToastProvider: notifikacije (useToast) dostupne su na svim stranicama. */}
       <ToastProvider>
-        <App />
+        {/* AuthProvider: ko je prijavljen (useAuth); unutar ToastProvider-a, jer javlja "Odjavljen si" i sl. */}
+        <AuthProvider>
+          <App />
+        </AuthProvider>
       </ToastProvider>
     </BrowserRouter>
   </StrictMode>,

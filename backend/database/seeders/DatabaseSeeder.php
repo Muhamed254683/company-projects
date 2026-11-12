@@ -24,5 +24,8 @@ class DatabaseSeeder extends Seeder
 
         // Jedan projekat (sa clanovima) ide u korpu (soft delete), da korpa u aplikaciji ne bude prazna.
         Project::inRandomOrder()->first()?->delete();
+
+        // Poznat nalog za prijavu: admin@example.com / password.
+        $this->call(AdminUserSeeder::class);
     }
 }

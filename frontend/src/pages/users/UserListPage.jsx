@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { apiRequest } from '../../api/client.js'
+import { useAuth } from '../../auth/authContext.js'
 import Alert from '../../components/ui/Alert.jsx'
 import Button from '../../components/ui/Button.jsx'
 import ConfirmDialog from '../../components/ui/ConfirmDialog.jsx'
@@ -18,6 +19,7 @@ const FILTER_KEYS = ['search', 'company_id']
 
 function UserListPage() {
   const toast = useToast()
+  const { user: current_user } = useAuth()
   const { filters, has_filters, setFilter, resetFilters } = useListFilters(FILTER_KEYS)
   const { rows, meta, loading, error, setPage, reload } = usePaginatedList('/users', { filter_keys: FILTER_KEYS })
 
@@ -73,9 +75,14 @@ function UserListPage() {
           <Button size="sm" variant="secondary" to={`/users/${user.id}/edit`}>
             Izmeni
           </Button>
-          <Button size="sm" variant="danger" onClick={() => openDeleteDialog(user)}>
-            Obriši
-          </Button>
+          {/* Sopstveni nalog ne moze da se obrise (API bi vratio 403), pa umesto dugmeta pise "(ti)". */}
+          {user.id === current_user?.id ? (
+            <span className="px-2.5 py-1 text-xs font-medium text-gray-500">(ti)</span>
+          ) : (
+            <Button size="sm" variant="danger" onClick={() => openDeleteDialog(user)}>
+              Obriši
+            </Button>
+          )}
         </div>
       ),
     },
