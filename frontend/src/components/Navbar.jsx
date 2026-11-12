@@ -1,4 +1,5 @@
 import { Link, NavLink } from 'react-router-dom'
+import { BACKEND_URL } from '../api/client.js'
 
 const links = [
   { to: '/companies', label: 'Companies' },
@@ -31,6 +32,13 @@ function Navbar() {
               </NavLink>
             </li>
           ))}
+          {/* Laravel Blade dashboard (druga aplikacija), zato obican <a>, a ne NavLink.
+              Adresa dolazi iz .env (VITE_API_URL bez "/api"), nije hardkodovana. */}
+          <li className="ml-2 border-l border-blue-500 pl-2">
+            <a href={BACKEND_URL} className={navLinkClass({ isActive: false })}>
+              Dashboard ↗
+            </a>
+          </li>
         </ul>
       </nav>
     </header>
